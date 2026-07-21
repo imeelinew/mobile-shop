@@ -5,15 +5,10 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const keyword = ref<string>('')
 
-const goSearch = () => {
-    router.push('/search')
-}
 </script>
 <template>
-    <van-search v-model="keyword" placeholder="请输入搜索关键词" @click="goSearch" />
+    <van-nav-bar title="搜索" left-text="返回" left-arrow @click-left="router.back()" />
 
-    <div>
-        <h1>Home</h1>
-    </div>
+    <van-search v-model="keyword" placeholder="请输入商品名称" />
 </template>
 <style lang="scss" scoped></style>

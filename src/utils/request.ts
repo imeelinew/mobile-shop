@@ -24,4 +24,11 @@ request.interceptors.response.use(response => {
 }, error => {
     return Promise.reject(error)
 })
+
+export const get = (
+    url: string,
+    params?: any,
+): Promise<any> => {
+    return request.get(url, { params })
+}
 export default request

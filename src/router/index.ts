@@ -5,40 +5,48 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
-      redirect: '/home',
-    },
-    {
       path: '/login',
       name: 'login',
-      component: () => import('../views/LoginView.vue'),
-    },
-    {
-      path: '/home',
-      name: 'home',
-      component: () => import('../views/HomeView.vue'),
+      component: () => import('@/views/LoginView.vue'),
     },
     {
       path: '/register',
       name: 'register',
-      component: () => import('../views/RegisterView.vue'),
+      component: () => import('@/views/RegisterView.vue'),
     },
     {
-      path: '/category',
-      name: 'category',
-      component: () => import('../views/CategoryView.vue'),
+      path: '/search',
+      name: 'search',
+      component: () => import('../views/SearchView.vue'),
     },
     {
-      path: '/cart',
-      name: 'cart',
-      component: () => import('../views/CartView.vue'),
-    },
-    {
-      path: '/mine',
-      name: 'mine',
-      component: () => import('../views/MineView.vue'),
-    },
-  ],
+      path: '/',
+      component: () => import('../components/Layout.vue'),
+      redirect: '/home',
+      children: [
+        {
+          path: 'home',
+          name: 'home',
+          component: () => import('../views/HomeView.vue'),
+        },
+        {
+          path: 'category',
+          name: 'category',
+          component: () => import('../views/CategoryView.vue'),
+        },
+        {
+          path: 'cart',
+          name: 'cart',
+          component: () => import('../views/CartView.vue'),
+        },
+        {
+          path: 'mine',
+          name: 'mine',
+          component: () => import('../views/MineView.vue'),
+        },
+      ],
+    }
+  ]
 })
 
 const whiteList = ['/login', '/register']
