@@ -1,6 +1,8 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { getBannerList, getNoticeList, getProductGroups } from '@/api/home'
+import type { Banner, Notice, Product, ProductGroup } from '@/types/home'
 
 const router = useRouter()
 const keyword = ref<string>('')
@@ -8,12 +10,89 @@ const keyword = ref<string>('')
 const goSearch = () => {
     router.push('/search')
 }
+
+const bannerList = ref<Banner[]>([])
+const noticeList = ref<Notice[]>([])
+const productGroups = ref<ProductGroup[]>([])
+
+const initHome = async () => {
+    try {
+        const [
+            bannerResult,
+            noticeResult,
+            productGroupsResult
+        ] = await Promise.all([
+            getBannerList(),
+            getNoticeList(),
+            getProductGroups()
+        ])
+        bannerList.value = bannerResult.data
+        noticeList.value = noticeResult.data
+        productGroups.value = productGroupsResult.data
+        console.log(bannerList.value, 'bannerList', noticeList.value, 'noticeList', productGroups.value, 'productGroups')
+    } catch (error) {
+        console.error(error)
+    }
+}
+onMounted(() => {
+    initHome()
+})
+
+const navItems = [
+    { text: '新品推荐', icon: 'new-o' },
+    { text: '限时特惠', icon: 'clock-o' },
+    { text: '每日疯抢', icon: 'fire-o' },
+    { text: '领优惠券', icon: 'coupon-o' },
+]
 </script>
 <template>
+    <!-- 搜索 -->
     <van-search v-model="keyword" placeholder="请输入搜索关键词" @click="goSearch" />
+    <van-swipe :autoplay="3000" lazy-render>
+        <van-swipe-item v-for="banner in bannerList" :key="banner.imgUrl">
+            <img class="banner-image" :src="banner.imgUrl" alt="商城轮播图" />
+        </van-swipe-item>
+    </van-swipe>
+    <van-grid>
+        <van-grid-item v-for="item in navItems" :key="item.text" :icon="item.icon" :text="item.text" />
+    </van-grid>
+    <!-- 公告 -->
+    <van-notice-bar left-icon="volume-o">
+        <van-swipe class="notice-swipe" horizontal :autoplay="3000" :show-indicators="false">
+            <van-swipe-item v-for="notice in noticeList" :key="notice.id">
+                {{ notice.title }}
+            </van-swipe-item>
+        </van-swipe>
+    </van-notice-bar>
+    <!-- 商品组 -->
+    <section v-for="group in productGroups" :key="group.id" class="product-group">
+        <header class="group-header">
+            <h2>{{ group.title }}</h2>
+            <span>查看更多</span>
+        </header>
 
+        <div class="product-grid">
+            <article v-for="product in group.productDtoList" :key="product.prodId" class="product-card">
+                <img class="product-image" :src="product.pic" :alt="product.prodName" />
+
+                <div class="product-name">
+                    {{ product.prodName }}
+                </div>
+
+                <div class="product-price">
+                    ¥ {{ product.price }}
+                </div>
+            </article>
+        </div>
+    </section>
     <div>
         <h1>Home</h1>
     </div>
 </template>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.banner-image {
+    display: block;
+    width: 100%;
+    height: 370px;
+}
+</style>
