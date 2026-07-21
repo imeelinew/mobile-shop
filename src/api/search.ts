@@ -5,7 +5,7 @@ export const searchProducts = (params: SearchParams) => {
     return get('/search/searchProdPage', params)
 }
 export const getHotSearches = () => {
-    return get('search/hotSearch', {
+    return get('/search/hotSearch', {
         number: 10,
         sort: 0
     })
