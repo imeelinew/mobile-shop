@@ -1,11 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { getToken } from '@/utils/token'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      redirect: '/login',
+      redirect: '/home',
     },
     {
       path: '/login',
@@ -38,6 +39,14 @@ const router = createRouter({
       component: () => import('../views/MineView.vue'),
     },
   ],
+})
+
+const whiteList = ['/login', '/register']
+
+router.beforeEach((to) => {
+  if (!getToken() && !whiteList.includes(to.path)) {
+    return '/login'
+  }
 })
 
 export default router

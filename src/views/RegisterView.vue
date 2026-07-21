@@ -61,8 +61,8 @@ const passwordValidator = (value) => {
                 message: '密码必须是6到16位数字'
             }]" />
         </van-cell-group>
-        <div class="submit-box"m>
-            <van-button round block type=" primary" native-type="submit">
+        <div class="submit-box">
+            <van-button round block type="primary" native-type="submit">
                 创建账号
             </van-button>
         </div>

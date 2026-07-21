@@ -4,7 +4,7 @@
   "exclude": ["src/**/__tests__/*"],
   "compilerOptions": {
     // Temporarily relaxed while learning the Vue/Vant business flow.
-    // "strict": false,
+    "strict": false,
 
     // Extra safety for array and object lookups, but may have false positives.
     "noUncheckedIndexedAccess": false,

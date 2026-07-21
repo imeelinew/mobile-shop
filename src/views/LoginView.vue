@@ -3,6 +3,10 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { loginApi } from '@/api/userInfo'
 import { encryptPassword } from '@/utils/encrypt'
+import { setToken } from '@/utils/token'
+import { showFailToast, showSuccessToast } from 'vant'
+import 'vant/es/toast/style'
+
 const router = useRouter()
 const goRegister = () => {
     router.push('/register')
@@ -16,10 +20,18 @@ const onSubmit = async (values) => {
             userName: values.username,
             passWord: encryptPassword(values.password)
         })
-        console.log('登录结果', result)
+
+        if (result.success && result.data?.accessToken) {
+            setToken(result.data.accessToken)
+            showSuccessToast('登录成功')
+            await router.push('/home')
+        } else {
+            showFailToast(result.msg || '登录失败')
+        }
     }
     catch (error) {
-        console.log('登录失败', error)
+        console.error('登录失败', error)
+        showFailToast('网络请求失败')
     }
 }
 // 正则
@@ -47,7 +59,7 @@ const passwordValidator = (value) => {
                 message: '密码必须是6到16位数字'
             }]" />
         </van-cell-group>
-        <div style="margin: 16px;">
+        <div class="submit-box">
             <van-button round block type="primary" native-type="submit">
                 提交
             </van-button>
@@ -59,4 +71,8 @@ const passwordValidator = (value) => {
     </van-button>
 
 </template>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.submit-box {
+    margin: 16px;
+}
+</style>
