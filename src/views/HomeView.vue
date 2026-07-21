@@ -68,7 +68,7 @@ const navItems = [
     <section v-for="group in productGroups" :key="group.id" class="product-group">
         <header class="group-header">
             <h2>{{ group.title }}</h2>
-            <span>查看更多</span>
+            <span style="font-size: 16px;">查看更多</span>
         </header>
 
         <div class="product-grid">
@@ -85,14 +85,64 @@ const navItems = [
             </article>
         </div>
     </section>
-    <div>
-        <h1>Home</h1>
-    </div>
 </template>
 <style lang="scss" scoped>
 .banner-image {
     display: block;
     width: 100%;
     height: 370px;
+}
+
+.notice-swipe {
+    height: 40px;
+    width: 100%;
+}
+
+.product-group {
+    padding: 20px;
+}
+
+.group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    h2 {
+        margin: 20px 0;
+        font-size: 32px;
+    }
+
+    span {
+        color: #999;
+    }
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.product-image {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+}
+
+.product-name {
+    font-size: 28px;
+    margin-top: 10px;
+    overflow: hidden;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.product-price {
+    margin-top: 8px;
+    color: #ee0a24;
+    font-size: 30px;
 }
 </style>
