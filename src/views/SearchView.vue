@@ -1,29 +1,50 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { searchProducts } from '@/api/search'
 import type { SearchProduct } from '@/types/search'
 
 const router = useRouter()
 const keyword = ref('')
-
+import { getSearchSuggestions, type AISource, type AIResult } from '@/ai/searchSuggestions'
 //搜索功能字段
 const products = ref<SearchProduct[]>([])
 const loading = ref<boolean>(false)
 const hasSearched = ref<boolean>(false)
+const HISTORY_KEY = 'search-history'
 //搜索历史字段
 const history = ref<string[]>([])
+//AI 搜索联想字段
+const aiLoading = ref<boolean>(false)
+const aiSource = ref<AISource>('fallback')//决定显示AI联想还是本地联想
+const aiSuggestions = ref<string[]>([])//AI联想结果
+let aiTimer: number | undefined//AI联想定时器
+
 const saveHistory = (word: string) => {
   const oldHistory = history.value.filter((item) => item !== word)
-  history.value = [word, ...oldHistory]
+  history.value = [word, ...oldHistory].slice(0, 10)
   console.log('搜索历史', history.value)
-
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.value))
+}
+const loadHistory = () => {
+  const savedHistory = localStorage.getItem(HISTORY_KEY)
+  if (savedHistory) {
+    history.value = JSON.parse(savedHistory)
+  }
+}
+const removeHistory = (word: string) => {
+  history.value = history.value.filter((item) => item !== word)
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.value))
+}
+const clearHistory = () => {
+  history.value = []
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.value))
 }
 //搜索功能
 const doSearch = async (word = keyword.value) => {
   const value = word.trim()
   if (!value) return
-
+  keyword.value = value
   loading.value = true
   hasSearched.value = true
 
@@ -46,13 +67,42 @@ const doSearch = async (word = keyword.value) => {
     loading.value = false
   }
 }
+const resetSearch = () => {
+  keyword.value = ''
+  products.value = []
+  hasSearched.value = false
+  loading.value = false
+}
+//AI联想输入处理 防抖处理
+const handleAIInput = (value: string) => {
+  window.clearTimeout(aiTimer)
+  const word = value.trim()
+  if (!word) {
+    aiSuggestions.value = []
+    aiLoading.value = false
+    return
+  }
+  aiLoading.value = true
+  aiSuggestions.value = []
+  aiTimer = window.setTimeout(async () => {
+    const {result,source} = await getSearchSuggestions(word)
+  }, 300)
+}
+onMounted(() => {
+  loadHistory()
+  console.log('搜索历史', history.value)
+})
+onBeforeUnmount(() => {
+  window.clearTimeout(aiTimer)
+})
 </script>
 
 <template>
   <div class="search-page">
     <van-nav-bar title="搜索" left-text="返回" left-arrow @click-left="router.back()" />
 
-    <van-search v-model="keyword" placeholder="请输入搜索关键词" show-action clearable @search="doSearch" />
+    <van-search v-model="keyword" placeholder="请输入搜索关键词" show-action @cancel="resetSearch" clearable @search="doSearch"
+      @clear="resetSearch" @update:model-value="handleAIInput" />
     <van-loading v-if="loading">搜索中...</van-loading>
     <template v-else-if="hasSearched">
       <div v-if="products.length">
@@ -62,6 +112,17 @@ const doSearch = async (word = keyword.value) => {
       </div>
       <van-empty v-else description="暂无搜索结果" />
     </template>
+    <div v-else>
+      <h3>搜索历史</h3>
+      <van-button v-if="history.length" type="primary" size="small" @click="clearHistory">清空历史</van-button>
+      <div v-if="history.length">
+        <van-tag v-for="item in history" :key="item" size="large" class="history-item" closeable @click="doSearch(item)"
+          @close.stop="removeHistory(item)">
+          {{ item }}
+        </van-tag>
+      </div>
+      <van-empty v-else description="暂无搜索历史" />
+    </div>
 
   </div>
 </template>
