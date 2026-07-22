@@ -2,11 +2,12 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { searchProducts } from '@/api/search'
+import { getSearchSuggestions, type AISource } from '@/ai/searchSuggestions'
 import type { SearchProduct } from '@/types/search'
 
 const router = useRouter()
 const keyword = ref('')
-import { getSearchSuggestions, type AISource, type AIResult } from '@/ai/searchSuggestions'
+
 //搜索功能字段
 const products = ref<SearchProduct[]>([])
 const loading = ref<boolean>(false)
@@ -72,6 +73,9 @@ const resetSearch = () => {
   products.value = []
   hasSearched.value = false
   loading.value = false
+  window.clearTimeout(aiTimer)
+  aiSuggestions.value = []
+  aiLoading.value = false
 }
 //AI联想输入处理 防抖处理
 const handleAIInput = (value: string) => {
@@ -85,7 +89,11 @@ const handleAIInput = (value: string) => {
   aiLoading.value = true
   aiSuggestions.value = []
   aiTimer = window.setTimeout(async () => {
-    const {result,source} = await getSearchSuggestions(word)
+    const { result, source } = await getSearchSuggestions(word)
+    aiSuggestions.value = result
+    aiSource.value = source
+    aiLoading.value = false
+    console.log('AI联想', aiSuggestions.value, aiSource.value)
   }, 300)
 }
 onMounted(() => {
@@ -122,6 +130,25 @@ onBeforeUnmount(() => {
         </van-tag>
       </div>
       <van-empty v-else description="暂无搜索历史" />
+      <div v-if="keyword.trim()" class="ai-section">
+        <h3>
+          🤖 AI 搜索建议
+          <van-tag :type="aiSource === 'openai' ? 'primary' : 'success'">
+            {{ aiSource === 'openai' ? 'AI' : '本地' }}
+          </van-tag>
+        </h3>
+
+        <van-loading v-if="aiLoading" size="20px">
+          思考中...
+        </van-loading>
+
+        <div v-else-if="aiSuggestions.length">
+          <van-tag v-for="item in aiSuggestions" :key="item" size="large" plain type="success" class="suggestion-item"
+            @click="doSearch(item)">
+            {{ item }}
+          </van-tag>
+        </div>
+      </div>
     </div>
 
   </div>
