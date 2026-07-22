@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>mobile-shop · 代码结构与请求流程（教学图）</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@500;600;700&display=swap" rel="stylesheet" />
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs'
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      themeVariables: {
+        primaryColor: '#d8f3ee',
+        primaryTextColor: '#0f172a',
+        primaryBorderColor: '#0f766e',
+        secondaryColor: '#e8eef5',
+        tertiaryColor: '#fff7ed',
+        lineColor: '#475569',
+        fontFamily: 'IBM Plex Sans, sans-serif',
+        fontSize: '14px',
+      },
+      flowchart: { curve: 'basis', padding: 16, htmlLabels: true },
+    })
+  </script>
+  <style>
+    :root {
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #d7e0ea;
+      --surface: rgba(255, 255, 255, 0.78);
+      --surface-solid: #ffffff;
+      --teal: #0f766e;
+      --teal-soft: #ccfbf1;
+      --sky: #0369a1;
+      --sky-soft: #e0f2fe;
+      --amber: #b45309;
+      --amber-soft: #ffedd5;
+      --rose: #be123c;
+      --rose-soft: #ffe4e6;
+      --emerald: #047857;
+      --emerald-soft: #d1fae5;
+      --shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: 'IBM Plex Sans', system-ui, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #c7f0e8 0%, transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, #dbeafe 0%, transparent 50%),
+        linear-gradient(180deg, #eef3f8 0%, #f7f9fc 40%, #eef2f6 100%);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    a { color: var(--teal); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .wrap {
+      width: min(1120px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 2.5rem 0 4rem;
+    }
+
+    /* Hero */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(15, 118, 110, 0.18);
+      border-radius: 28px;
+      padding: 2.4rem 2.2rem 2.1rem;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.92), rgba(236,253,245,0.75)),
+        url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230f766e' fill-opacity='0.045'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      box-shadow: var(--shadow);
+      animation: rise 0.7s ease both;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      right: -80px;
+      top: -60px;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(15,118,110,0.16), transparent 70%);
+      pointer-events: none;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 0.85rem;
+    }
+    .eyebrow::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--teal);
+      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.18);
+      animation: pulse 2s ease infinite;
+    }
+    h1 {
+      font-family: Sora, sans-serif;
+      font-size: clamp(1.75rem, 4vw, 2.55rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin: 0 0 0.75rem;
+    }
+    .hero-lead {
+      max-width: 52rem;
+      color: var(--muted);
+      font-size: 1.05rem;
+      margin: 0 0 1.4rem;
+    }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.8);
+      color: var(--ink);
+    }
+    .chip code {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--teal);
+    }
+
+    /* Nav */
+    .toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 1.5rem 0 2.2rem;
+      animation: rise 0.7s 0.08s ease both;
+    }
+    .toc a {
+      padding: 0.45rem 0.9rem;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      font-size: 0.88rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+    .toc a:hover {
+      transform: translateY(-1px);
+      border-color: var(--teal);
+      background: var(--teal-soft);
+      text-decoration: none;
+    }
+
+    /* Sections */
+    section {
+      margin-bottom: 2rem;
+      animation: rise 0.65s ease both;
+    }
+    .panel {
+      background: var(--surface);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.25rem 1.4rem 0.9rem;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(248,250,252,0.6));
+    }
+    .panel-head h2 {
+      font-family: Sora, sans-serif;
+      font-size: 1.2rem;
+      margin: 0 0 0.25rem;
+      letter-spacing: -0.02em;
+    }
+    .panel-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .panel-body { padding: 1.25rem 1.4rem 1.5rem; }
+
+    /* Status badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.22rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+    .badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .done { color: var(--emerald); background: var(--emerald-soft); }
+    .partial { color: var(--sky); background: var(--sky-soft); }
+    .todo { color: var(--amber); background: var(--amber-soft); }
+    .missing { color: var(--rose); background: var(--rose-soft); }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      margin-top: 0.2rem;
+    }
+
+    /* Page cards */
+    .page-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 0.9rem;
+    }
+    .page-card {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1rem 1rem 0.95rem;
+      background: var(--surface-solid);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .page-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    }
+    .page-card.done-border { border-left: 4px solid var(--emerald); }
+    .page-card.partial-border { border-left: 4px solid var(--sky); }
+    .page-card.todo-border { border-left: 4px solid var(--amber); }
+    .page-card h3 {
+      font-family: Sora, sans-serif;
+      font-size: 1rem;
+      margin: 0 0 0.35rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .page-card .route {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--teal);
+      margin-bottom: 0.55rem;
+    }
+    .page-card ul {
+      margin: 0;
+      padding-left: 1.05rem;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+    .page-card li { margin: 0.2rem 0; }
+
+    /* Structure tree */
+    .tree {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.82rem;
+      line-height: 1.75;
+      background: #0b1220;
+      color: #cbd5e1;
+      border-radius: 14px;
+      padding: 1.15rem 1.2rem;
+      overflow-x: auto;
+    }
+    .tree .dir { color: #5eead4; font-weight: 500; }
+    .tree .file { color: #e2e8f0; }
+    .tree .note { color: #94a3b8; }
+    .tree .ok { color: #34d399; }
+    .tree .warn { color: #38bdf8; }
+    .tree .bad { color: #fbbf24; }
+    .tree .gap { color: #fb7185; }
+
+    /* Architecture layers */
+    .layers {
+      display: grid;
+      gap: 0.65rem;
+    }
+    .layer {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 0.85rem;
+      align-items: stretch;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .layer-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0.75rem;
+      font-family: Sora, sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .l1 { background: linear-gradient(160deg, #0f766e, #0d9488); }
+    .l2 { background: linear-gradient(160deg, #0369a1, #0284c8); }
+    .l3 { background: linear-gradient(160deg, #4338ca, #6366f1); }
+    .l4 { background: linear-gradient(160deg, #b45309, #d97706); }
+    .l5 { background: linear-gradient(160deg, #334155, #475569); }
+    .layer-content {
+      padding: 0.75rem 0.9rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
+    }
+    .fn {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.74rem;
+      padding: 0.28rem 0.5rem;
+      border-radius: 8px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      color: #0f172a;
+    }
+    .fn.dim {
+      opacity: 0.45;
+      text-decoration: line-through;
+    }
+
+    /* Flow */
+    .mermaid {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1rem;
+      overflow-x: auto;
+    }
+    .flow-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.1rem;
+    }
+    .flow-block h3 {
+      font-family: Sora, sans-serif;
+      font-size: 0.98rem;
+      margin: 0 0 0.55rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .call-chain {
+      margin-top: 0.7rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
+      color: #334155;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .call-chain .arrow { color: var(--teal); margin: 0 0.25rem; }
+
+    /* API table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.65rem 0.7rem;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    th {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      font-weight: 600;
+      background: #f8fafc;
+    }
+    td code {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
+      background: #f1f5f9;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+    }
+    .method {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+    }
+    .get { background: #d1fae5; color: #047857; }
+    .post { background: #ffedd5; color: #b45309; }
+
+    /* Roadmap */
+    .roadmap {
+      display: grid;
+      gap: 0.7rem;
+    }
+    .road-item {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.85rem;
+      align-items: start;
+      padding: 0.85rem 1rem;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .road-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-family: Sora, sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      background: var(--teal-soft);
+      color: var(--teal);
+    }
+    .road-item h4 {
+      margin: 0 0 0.2rem;
+      font-size: 0.95rem;
+      font-family: Sora, sans-serif;
+    }
+    .road-item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .footer-note {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 2rem;
+      padding-bottom: 1rem;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.18); }
+      50% { box-shadow: 0 0 0 8px rgba(15, 118, 110, 0.08); }
+    }
+
+    @media (max-width: 720px) {
+      .wrap { width: min(100% - 1.25rem, 1120px); padding-top: 1.25rem; }
+      .hero { padding: 1.5rem 1.2rem; border-radius: 20px; }
+      .layer { grid-template-columns: 1fr; }
+      .layer-label { padding: 0.55rem; }
+      .panel-head, .panel-body { padding-left: 1rem; padding-right: 1rem; }
+      .call-chain { white-space: normal; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div class="eyebrow">Vue 3 教学项目 · 架构导览</div>
+      <h1>mobile-shop</h1>
+      <p class="hero-lead">
+        这是一份面向课堂的代码结构图与网络请求流程图。当前项目<strong>已打通登录 / 注册 / 首页 / 搜索</strong>，
+        分类、购物车、我的仍是空壳；Pinia 已安装但尚未落地。顺着下面的函数名，你可以完整走通一次真实请求。
+      </p>
+      <div class="meta-row">
+        <span class="chip">Vue 3 + Vite 8 + TS</span>
+        <span class="chip">Vant 4 · Vue Router 5</span>
+        <span class="chip">Axios · Pinia（未用）</span>
+        <span class="chip">API：<code>shop-api.edu.koobietech.com</code></span>
+      </div>
+      <div class="legend" style="margin-top:1rem">
+        <span class="badge done">基本完成</span>
+        <span class="badge partial">部分完成</span>
+        <span class="badge todo">未完成 / 空壳</span>
+        <span class="badge missing">尚未存在</span>
+      </div>
+    </header>
+
+    <nav class="toc" aria-label="目录">
+      <a href="#pages">① 页面完成度</a>
+      <a href="#structure">② 代码结构</a>
+      <a href="#layers">③ 分层与函数</a>
+      <a href="#http">④ HTTP 封装</a>
+      <a href="#flows">⑤ 请求流程图</a>
+      <a href="#api">⑥ API 一览</a>
+      <a href="#roadmap">⑦ 待实现路线</a>
+    </nav>
+
+    <!-- 1. Pages -->
+    <section id="pages">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>① 页面完成度地图</h2>
+            <p>按路由对照：哪些页面逻辑基本可用，哪些只是占位。</p>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="page-grid">
+            <article class="page-card done-border">
+              <h3>登录 <span class="badge done">基本完成</span></h3>
+              <div class="route">/login · LoginView.vue</div>
+              <ul>
+                <li>表单校验 + AES 密码加密</li>
+                <li><code>loginApi</code> → <code>setToken</code></li>
+                <li>成功跳转 <code>/home</code></li>
+              </ul>
+            </article>
+
+            <article class="page-card done-border">
+              <h3>注册 <span class="badge done">基本完成</span></h3>
+              <div class="route">/register · RegisterView.vue</div>
+              <ul>
+                <li><code>registerApi</code> + 密码加密</li>
+                <li>成功后回登录页</li>
+              </ul>
+            </article>
+
+            <article class="page-card partial-border">
+              <h3>首页 <span class="badge partial">部分完成</span></h3>
+              <div class="route">/home · HomeView.vue</div>
+              <ul>
+                <li>轮播 / 公告 / 商品组已接 API</li>
+                <li>金刚区硬编码，无点击</li>
+                <li>商品不可进详情</li>
+              </ul>
+            </article>
+
+            <article class="page-card done-border">
+              <h3>搜索 <span class="badge done">基本完成</span></h3>
+              <div class="route">/search · SearchView.vue</div>
+              <ul>
+                <li>历史 / 热搜 / 结果列表</li>
+                <li>AI 联想（可降级本地规则）</li>
+                <li>结果同样无详情页</li>
+              </ul>
+            </article>
+
+            <article class="page-card todo-border">
+              <h3>分类 <span class="badge todo">未完成</span></h3>
+              <div class="route">/category · CategoryView.vue</div>
+              <ul>
+                <li>仅占位标题 <code>&lt;h1&gt;Category&lt;/h1&gt;</code></li>
+                <li>无 API、无列表</li>
+              </ul>
+            </article>
+
+            <article class="page-card todo-border">
+              <h3>购物车 <span class="badge todo">未完成</span></h3>
+              <div class="route">/cart · CartView.vue</div>
+              <ul>
+                <li>仅占位标题</li>
+                <li>无加购 / 结算链路</li>
+              </ul>
+            </article>
+
+            <article class="page-card todo-border">
+              <h3>我的 <span class="badge todo">未完成</span></h3>
+              <div class="route">/mine · MineView.vue</div>
+              <ul>
+                <li>仅占位标题</li>
+                <li><code>removeToken</code> 已写未用（无退出）</li>
+              </ul>
+            </article>
+
+            <article class="page-card" style="border-left:4px solid #fb7185; opacity:0.95">
+              <h3>商品详情等 <span class="badge missing">尚未存在</span></h3>
+              <div class="route">无路由 · 无 View 文件</div>
+              <ul>
+                <li>详情 / 订单 / 地址 / 支付均未建</li>
+                <li><code>src/stores/</code> 为空目录</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Structure -->
+    <section id="structure">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>② 代码结构图</h2>
+            <p>颜色标注：<span class="ok" style="color:#047857">■ 已完成</span>　
+              <span style="color:#0369a1">■ 部分完成</span>　
+              <span style="color:#b45309">■ 空壳</span>　
+              <span style="color:#be123c">■ 空目录 / 缺失</span></p>
+          </div>
+        </div>
+        <div class="panel-body">
+<pre class="tree"><span class="dir">mobile-shop/</span>
+├── <span class="file">package.json</span>                    <span class="note"># Vue3 · Vite · Vant · Axios · Pinia</span>
+├── <span class="file">vite.config.ts</span>                  <span class="note"># @ 别名 · Vant 按需自动导入</span>
+├── <span class="file">.env.development</span>                <span class="note"># VITE_APP_URL → 教学后端</span>
+└── <span class="dir">src/</span>
+    ├── <span class="file ok">main.ts</span>                     <span class="ok">✓ createApp + Pinia + Router</span>
+    ├── <span class="file ok">App.vue</span>                     <span class="ok">✓ 仅 &lt;RouterView /&gt;</span>
+    ├── <span class="dir">router/</span>
+    │   └── <span class="file ok">index.ts</span>               <span class="ok">✓ 路由表 + beforeEach 鉴权</span>
+    ├── <span class="dir gap">stores/</span>                      <span class="gap">✗ 空目录（Pinia 未落地）</span>
+    ├── <span class="dir">api/</span>
+    │   ├── <span class="file ok">userInfo.ts</span>            <span class="ok">✓ loginApi / registerApi</span>
+    │   ├── <span class="file ok">home.ts</span>                <span class="ok">✓ 轮播 / 公告 / 商品组</span>
+    │   └── <span class="file ok">search.ts</span>              <span class="ok">✓ 热搜 / 商品搜索</span>
+    ├── <span class="dir">utils/</span>
+    │   ├── <span class="file ok">request.ts</span>             <span class="ok">✓ axios 实例 + 拦截器 + get()</span>
+    │   ├── <span class="file ok">token.ts</span>               <span class="ok">✓ set/get/removeToken</span>
+    │   └── <span class="file ok">encrypt.ts</span>             <span class="ok">✓ AES 密码加密</span>
+    ├── <span class="dir">components/</span>
+    │   ├── <span class="file ok">Layout.vue</span>             <span class="ok">✓ 主壳 + TabBar</span>
+    │   └── <span class="file ok">TabBar.vue</span>             <span class="ok">✓ 底部四 Tab</span>
+    ├── <span class="dir">views/</span>
+    │   ├── <span class="file ok">LoginView.vue</span>          <span class="ok">✓ 基本完成</span>
+    │   ├── <span class="file ok">RegisterView.vue</span>       <span class="ok">✓ 基本完成</span>
+    │   ├── <span class="file warn">HomeView.vue</span>           <span class="warn">◐ 部分完成</span>
+    │   ├── <span class="file ok">SearchView.vue</span>         <span class="ok">✓ 基本完成</span>
+    │   ├── <span class="file bad">CategoryView.vue</span>       <span class="bad">○ 空壳</span>
+    │   ├── <span class="file bad">CartView.vue</span>           <span class="bad">○ 空壳</span>
+    │   └── <span class="file bad">MineView.vue</span>           <span class="bad">○ 空壳</span>
+    ├── <span class="dir">ai/</span>
+    │   ├── <span class="file ok">searchSuggestions.ts</span>   <span class="ok">✓ 联想词 + 本地降级</span>
+    │   └── <span class="dir">providers/</span>
+    │       └── <span class="file ok">openai.ts</span>           <span class="ok">✓ fetch → chat/completions</span>
+    ├── <span class="dir">types/</span>                        <span class="note"># home.ts / search.ts</span>
+    └── <span class="dir gap">assets/</span>                      <span class="gap">✗ 空目录</span></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Layers -->
+    <section id="layers">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>③ 分层架构与关键函数</h2>
+            <p>自上而下：页面方法 → API 函数 → HTTP 工具 → 本地存储。划线项表示尚未实现。</p>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="layers">
+            <div class="layer">
+              <div class="layer-label l1">Views<br />页面层</div>
+              <div class="layer-content">
+                <span class="fn">onSubmit</span>
+                <span class="fn">onRegister</span>
+                <span class="fn">initHome</span>
+                <span class="fn">goSearch</span>
+                <span class="fn">doSearch</span>
+                <span class="fn">loadHotSearches</span>
+                <span class="fn">saveHistory</span>
+                <span class="fn dim">addToCart</span>
+                <span class="fn dim">logout</span>
+                <span class="fn dim">loadCategories</span>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="layer-label l2">API<br />接口层</div>
+              <div class="layer-content">
+                <span class="fn">loginApi</span>
+                <span class="fn">registerApi</span>
+                <span class="fn">getBannerList</span>
+                <span class="fn">getNoticeList</span>
+                <span class="fn">getProductGroups</span>
+                <span class="fn">searchProducts</span>
+                <span class="fn">getHotSearches</span>
+                <span class="fn dim">cartApi…</span>
+                <span class="fn dim">orderApi…</span>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="layer-label l3">AI<br />可选层</div>
+              <div class="layer-content">
+                <span class="fn">getSearchSuggestions</span>
+                <span class="fn">tryAI</span>
+                <span class="fn">requestAI</span>
+                <span class="fn">getFallbackSuggestions</span>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="layer-label l4">Utils<br />工具层</div>
+              <div class="layer-content">
+                <span class="fn">request / get</span>
+                <span class="fn">encryptPassword</span>
+                <span class="fn">setToken / getToken</span>
+                <span class="fn">removeToken</span>
+                <span class="fn">router.beforeEach</span>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="layer-label l5">Store<br />状态层</div>
+              <div class="layer-content">
+                <span class="fn dim">useUserStore</span>
+                <span class="fn dim">useCartStore</span>
+                <span class="note" style="color:var(--muted);font-size:0.85rem">当前全部用 View 内 ref + localStorage，Pinia 仅 createPinia() 注册</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. HTTP -->
+    <section id="http">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>④ HTTP 请求总链路</h2>
+            <p>所有业务接口都走 <code>src/utils/request.ts</code>；AI 联想走独立的 <code>fetch</code>。</p>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="mermaid">
+flowchart LR
+  A["View 方法<br/>如 doSearch / initHome"] --> B["API 函数<br/>api/*.ts"]
+  B --> C{"方法?"}
+  C -->|GET| D["get(url, params)"]
+  C -->|POST| E["request.post(url, data)"]
+  D --> F["axios 实例<br/>baseURL = VITE_APP_URL"]
+  E --> F
+  F --> G["请求拦截器<br/>getToken → Authorization"]
+  G --> H["教学后端<br/>shop-api.edu.koobietech.com"]
+  H --> I["响应拦截器<br/>return response.data"]
+  I --> J["页面拿到业务 body<br/>判断 success / 赋给 ref"]
+
+  K["SearchView watch"] --> L["getSearchSuggestions"]
+  L --> M["requestAI<br/>原生 fetch"]
+  M --> N["DeepSeek / OpenAI<br/>chat/completions"]
+          </div>
+          <div class="call-chain" style="margin-top:1rem;white-space:normal">
+            <strong style="font-family:Sora,sans-serif">鉴权守卫：</strong>
+            任意非白名单路由
+            <span class="arrow">→</span> <code>router.beforeEach</code>
+            <span class="arrow">→</span> <code>getToken()</code>
+            <span class="arrow">→</span> 无 token 则 <code>return '/login'</code>
+            （白名单：<code>/login</code>、<code>/register</code>）
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Flows -->
+    <section id="flows">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>⑤ 业务请求流程图（含函数名）</h2>
+            <p>三条已打通的主路径：登录、首页并行加载、搜索（含 AI）。</p>
+          </div>
+        </div>
+        <div class="panel-body flow-grid">
+
+          <div class="flow-block">
+            <h3><span class="badge done">基本完成</span> 登录流程</h3>
+            <div class="mermaid">
+sequenceDiagram
+  participant U as 用户
+  participant V as LoginView.onSubmit
+  participant E as encryptPassword
+  participant A as loginApi
+  participant R as request.post
+  participant T as setToken
+  participant Router as vue-router
+
+  U->>V: 提交表单 values
+  V->>E: encryptPassword(password)
+  E-->>V: 密文 passWord
+  V->>A: loginApi({ userName, passWord })
+  A->>R: POST /login
+  R-->>A: { success, data.accessToken }
+  A-->>V: result
+  alt success
+    V->>T: setToken(accessToken)
+    V->>Router: push('/home')
+  else fail
+    V-->>U: showFailToast
+  end
+            </div>
+            <div class="call-chain">
+              onSubmit <span class="arrow">→</span> encryptPassword <span class="arrow">→</span> loginApi <span class="arrow">→</span> request.post('/login') <span class="arrow">→</span> setToken <span class="arrow">→</span> router.push('/home')
+            </div>
+          </div>
+
+          <div class="flow-block">
+            <h3><span class="badge partial">部分完成</span> 首页并行加载</h3>
+            <div class="mermaid">
+flowchart TD
+  M["onMounted"] --> I["initHome()"]
+  I --> P["Promise.all"]
+  P --> B["getBannerList()"]
+  P --> N["getNoticeList()"]
+  P --> G["getProductGroups()"]
+  B --> G1["get('/indexImgs')"]
+  N --> G2["get('/shop/notice/topNoticeList')"]
+  G --> G3["get('/prod/tagProdList')"]
+  G1 --> S1["bannerList.value = data"]
+  G2 --> S2["noticeList.value = data"]
+  G3 --> S3["productGroups.value = data"]
+  S1 --> UI["渲染轮播 / 公告 / 商品组"]
+  S2 --> UI
+  S3 --> UI
+  UI --> X["商品点击 / 查看更多 / 金刚区<br/>尚未接线 ✗"]
+            </div>
+            <div class="call-chain">
+              onMounted <span class="arrow">→</span> initHome <span class="arrow">→</span> Promise.all(getBannerList, getNoticeList, getProductGroups) <span class="arrow">→</span> get(...)
+            </div>
+          </div>
+
+          <div class="flow-block">
+            <h3><span class="badge done">基本完成</span> 搜索 + AI 联想</h3>
+            <div class="mermaid">
+flowchart TD
+  subgraph Hot["热搜"]
+    H1["onMounted / 进入页"] --> H2["loadHotSearches()"]
+    H2 --> H3["getHotSearches()"]
+    H3 --> H4["get('/search/hotSearch')"]
+  end
+
+  subgraph AI["输入联想 · 300ms 防抖"]
+    W["watch(keyword)"] --> GS["getSearchSuggestions(word)"]
+    GS --> TRY["tryAI()"]
+    TRY -->|有密钥| RA["requestAI(prompt)"]
+    TRY -->|失败/无密钥| FB["getFallbackSuggestions()"]
+  end
+
+  subgraph Search["正式搜索"]
+    D["doSearch(word)"] --> SP["searchProducts(params)"]
+    SP --> GP["get('/search/searchProdPage')"]
+    GP --> PR["products = records"]
+    D --> SH["saveHistory → localStorage"]
+  end
+            </div>
+            <div class="call-chain">
+              doSearch <span class="arrow">→</span> searchProducts <span class="arrow">→</span> get('/search/searchProdPage') <span class="arrow">→</span> saveHistory<br />
+              watch(keyword) <span class="arrow">→</span> getSearchSuggestions <span class="arrow">→</span> tryAI <span class="arrow">→</span> requestAI / getFallbackSuggestions
+            </div>
+          </div>
+
+          <div class="flow-block">
+            <h3><span class="badge todo">未完成</span> 分类 / 购物车 / 我的</h3>
+            <div class="mermaid">
+flowchart LR
+  Tab["TabBar 可进入页面"] --> Stub["仅渲染 &lt;h1&gt; 占位"]
+  Stub --> Gap["无 API · 无函数 · 无 Store"]
+  Gap --> Future["待实现：分类列表 / 加购结算 / 用户信息与退出"]
+            </div>
+            <div class="call-chain" style="color:#b45309">
+              （暂无调用链）未来可参考：View 方法 → api/*.ts → get/request → Pinia store → 视图更新
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. API table -->
+    <section id="api">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>⑥ API 函数与端点一览</h2>
+            <p>对应 <code>src/api/</code> 三个模块；POST 直接用 axios 实例，GET 走封装的 <code>get()</code>。</p>
+          </div>
+        </div>
+        <div class="panel-body" style="overflow-x:auto;padding-top:0">
+          <table>
+            <thead>
+              <tr>
+                <th>模块</th>
+                <th>函数</th>
+                <th>方法</th>
+                <th>端点</th>
+                <th>调用方</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>userInfo.ts</code></td>
+                <td><code>loginApi</code></td>
+                <td><span class="method post">POST</span></td>
+                <td><code>/login</code></td>
+                <td>LoginView.onSubmit</td>
+                <td><span class="badge done">完成</span></td>
+              </tr>
+              <tr>
+                <td><code>userInfo.ts</code></td>
+                <td><code>registerApi</code></td>
+                <td><span class="method post">POST</span></td>
+                <td><code>/user/register</code></td>
+                <td>RegisterView.onRegister</td>
+                <td><span class="badge done">完成</span></td>
+              </tr>
+              <tr>
+                <td><code>home.ts</code></td>
+                <td><code>getBannerList</code></td>
+                <td><span class="method get">GET</span></td>
+                <td><code>/indexImgs</code></td>
+                <td>HomeView.initHome</td>
+                <td><span class="badge done">完成</span></td>
+              </tr>
+              <tr>
+                <td><code>home.ts</code></td>
+                <td><code>getNoticeList</code></td>
+                <td><span class="method get">GET</span></td>
+                <td><code>/shop/notice/topNoticeList</code></td>
+                <td>HomeView.initHome</td>
+                <td><span class="badge done">完成</span></td>
+              </tr>
+              <tr>
+                <td><code>home.ts</code></td>
+                <td><code>getProductGroups</code></td>
+                <td><span class="method get">GET</span></td>
+                <td><code>/prod/tagProdList</code></td>
+                <td>HomeView.initHome</td>
+                <td><span class="badge done">完成</span></td>
+              </tr>
+              <tr>
+                <td><code>search.ts</code></td>
+                <td><code>getHotSearches</code></td>
+                <td><span class="method get">GET</span></td>
+                <td><code>/search/hotSearch</code></td>
+                <td>SearchView.loadHotSearches</td>
+                <td><span class="badge done">完成</span></td>
+              </tr>
+              <tr>
+                <td><code>search.ts</code></td>
+                <td><code>searchProducts</code></td>
+                <td><span class="method get">GET</span></td>
+                <td><code>/search/searchProdPage</code></td>
+                <td>SearchView.doSearch</td>
+                <td><span class="badge done">完成</span></td>
+              </tr>
+              <tr>
+                <td colspan="5" style="color:var(--muted)">购物车 / 订单 / 分类 / 用户资料 / 商品详情 —— 尚无 api 文件</td>
+                <td><span class="badge missing">缺失</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Roadmap -->
+    <section id="roadmap">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>⑦ 建议学习 / 补全路线</h2>
+            <p>按依赖顺序推进，每步都能对照上面的分层图复用同一套请求模式。</p>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="roadmap">
+            <div class="road-item">
+              <div class="road-num">1</div>
+              <div>
+                <h4>落地 Pinia：用户 Store</h4>
+                <p>把 token / 用户信息从散落的 localStorage 收拢到 <code>useUserStore</code>；在 Mine 页调用 <code>removeToken</code> 做退出。</p>
+              </div>
+            </div>
+            <div class="road-item">
+              <div class="road-num">2</div>
+              <div>
+                <h4>商品详情页</h4>
+                <p>新建路由与 View；首页 / 搜索结果卡片点击传入 <code>prodId</code>，补 API + 类型。</p>
+              </div>
+            </div>
+            <div class="road-item">
+              <div class="road-num">3</div>
+              <div>
+                <h4>分类页 CategoryView</h4>
+                <p>从空壳做成左侧分类 + 右侧商品；复用 <code>get()</code> 模式。</p>
+              </div>
+            </div>
+            <div class="road-item">
+              <div class="road-num">4</div>
+              <div>
+                <h4>购物车 Store + CartView</h4>
+                <p>加购、改数量、结算；这是练习 Pinia 跨页共享状态的最佳场景。</p>
+              </div>
+            </div>
+            <div class="road-item">
+              <div class="road-num">5</div>
+              <div>
+                <h4>强化 request 拦截器</h4>
+                <p>统一处理业务 <code>success</code> / 401 清 token 跳登录，减少每个页面重复判断。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <p class="footer-note">
+      本地打开：<code>docs/architecture.html</code> · 数据截至当前仓库状态 · 仅供教学阅读
+    </p>
+  </div>
+</body>
+</html>
