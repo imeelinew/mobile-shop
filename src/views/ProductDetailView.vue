@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getProductDetail } from '@/api/product'
 import { getProductSellingPoints } from '@/ai/productSellingPoints'
-import { getCollectionStatus, toggleCollection } from '@/api/product'
+import { getCollectionStatus, toggleCollection, getProductCommentData } from '@/api/product'
 import { showSuccessToast, showFailToast } from 'vant'
 import 'vant/es/toast/style'
 const router = useRouter()
@@ -16,6 +16,13 @@ const loading = ref(false)
 const aiSellingPoints = ref<string[]>([])
 const aiSource = ref('fallback')
 const isCollected = ref(false)
+
+//AI状态
+const aiLoading = ref(true)
+//评论数据
+const commentData = ref<any>(null)
+
+//加载产品数据
 const loadProductDetail = async () => {
   const prodId = Number(route.query.prodId)
   if (!prodId) return
@@ -29,6 +36,9 @@ const loadProductDetail = async () => {
     //获取收藏状态
     const collectionStatus = await getCollectionStatus(prodId)
     isCollected.value = collectionStatus.data
+    //获取评论数据
+    const resComment = await getProductCommentData(prodId)
+    commentData.value = resComment.data
   } catch (error) {
     console.error('获取商品详情失败:', error)
   } finally {
@@ -38,10 +48,13 @@ const loadProductDetail = async () => {
     const res = await getProductSellingPoints(product.value)
     aiSource.value = res.source
     aiSellingPoints.value = res.result
+    aiLoading.value = false
   }
   console.log(product.value, '商品数据')
   console.log(aiSellingPoints.value, 'ai切分后的卖点4条数据')
 }
+
+//处理切换收藏状态
 const handleToggleCollection = async () => {
   if (!product.value) return
   const res = await toggleCollection(product.value.prodId)
@@ -54,9 +67,11 @@ const handleToggleCollection = async () => {
   }
   console.log(isCollected.value, '收藏状态')
 }
+
 const goBack = () => {
   router.back()
 }
+
 onMounted(() => {
   loadProductDetail()
 })
@@ -93,18 +108,42 @@ onMounted(() => {
 
     </div>
     <van-empty v-else description="暂无数据" />
-
-    <div v-if="aiSellingPoints.length" class="ai-selling-points">
+    <div v-if="aiLoading" class="ai-loading">
+      🤖 AI 正在分析商品卖点...
+    </div>
+    <div v-else-if="aiSellingPoints.length" class="ai-selling-points">
       <div class="ai-selling-title">
         <strong>🤖 AI智能卖点</strong>
         <van-tag plain :type="aiSource === 'openai' ? 'primary' : 'success'">
-          {{ aiSource === 'openai' ? 'DeepSeek AI' : '本地' }}
+          <!-- {{ aiSource === 'openai' ? 'DeepSeek AI' : '本地' }} -->
+          <span v-if="aiSource === 'openai'">DeepSeek AI</span>
+          <span v-else-if="aiSellingPoints.length > 3">智能推荐卖点</span>
+          <span v-else>本地</span>
         </van-tag>
       </div>
       <div class="ai-selling-point" v-for="point in aiSellingPoints" :key="point">
         <span class="ai-selling-point-text">{{ point }}</span>
       </div>
     </div>
+    <van-divider />
+    <!-- 下方暂未完成 -->
+    <div class="selected-row">
+      <span>已选</span>
+    </div>
+
+    <van-divider />
+    <div v-if="commentData" class="comment-summary">
+      <span>好评{{ commentData.positiveRating }}%</span>
+      <span style="color: gray;">共{{ commentData.number }}条</span>
+    </div>
+    <div v-if="commentData" class="comment-tabs">
+      <van-tag>全部{{ commentData.number }}</van-tag>
+      <van-tag>好评{{ commentData.praiseNumber }}</van-tag>
+      <van-tag>中评{{ commentData.secondaryNumber }}</van-tag>
+      <van-tag>差评{{ commentData.negativeNumber }}</van-tag>
+      <van-tag>有图{{ commentData.picNumber }}</van-tag>
+    </div>
+    <div v-if="product?.content" class="product-content" v-html="product.content"></div>
   </div>
 </template>
 <style lang="scss" scoped>
@@ -202,5 +241,59 @@ onMounted(() => {
       }
     }
   }
+
+  .ai-loading {
+    margin: 24px 28px;
+    padding: 28px;
+    border-radius: 14px;
+    background: #f4f3ff;
+    font-size: 24px;
+    text-align: center;
+  }
+
+  .selected-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 28px;
+    background: #fff;
+    font-size: 24px;
+    text-align: center;
+  }
+
+  .comment-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 28px;
+    background: #fff;
+    font-size: 24px;
+    text-align: center;
+  }
+
+  .comment-tabs {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 28px;
+    background: #fff;
+    font-size: 24px;
+    text-align: center;
+  }
+  //HTML内容展示
+  .product-content {
+  overflow: hidden;
+  background: #fff;
+
+  :deep(p) {
+    margin: 0;
+  }
+
+  :deep(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}
 }
 </style>
