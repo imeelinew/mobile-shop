@@ -145,6 +145,13 @@ onMounted(() => {
     </div>
     <div v-if="product?.content" class="product-content" v-html="product.content"></div>
   </div>
+  <!-- 底部操作栏 -->
+  <van-action-bar>
+    <van-action-bar-icon icon="cart-o" text="购物车" />
+    <van-action-bar-icon icon="shop-o" text="店铺" />
+    <van-action-bar-button type="warning" text="加入购物车" />
+    <van-action-bar-button type="danger" text="立即购买" />
+  </van-action-bar>
 </template>
 <style lang="scss" scoped>
 .product-detail-page {
@@ -280,20 +287,20 @@ onMounted(() => {
     font-size: 24px;
     text-align: center;
   }
-  //HTML内容展示
+
   .product-content {
-  overflow: hidden;
-  background: #fff;
-
-  :deep(p) {
-    margin: 0;
-  }
-
-  :deep(img) {
-    display: block;
     width: 100%;
-    height: auto;
+    max-width: 100vw;
+    overflow: hidden;
+    box-sizing: border-box;
+    background: #fff;
+
+    :deep(img) {
+      display: block;
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+    }
   }
-}
 }
 </style>
