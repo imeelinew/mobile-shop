@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { searchProducts } from '@/api/search'
+import { searchProducts, getHotSearches } from '@/api/search'
 import { getSearchSuggestions, type AISource } from '@/ai/searchSuggestions'
 import type { SearchProduct } from '@/types/search'
 
@@ -13,6 +13,16 @@ const products = ref<SearchProduct[]>([])
 const loading = ref<boolean>(false)
 const hasSearched = ref<boolean>(false)
 const HISTORY_KEY = 'search-history'
+const hotSearches = ref<string[]>([])
+
+const fallbackHotSearches = [
+  'iPhone',
+  '运动鞋',
+  '兰蔻',
+  '阿迪达斯',
+  '新鲜水果',
+  '蓝牙耳机'
+]
 //搜索历史字段
 const history = ref<string[]>([])
 //AI 搜索联想字段
@@ -96,8 +106,24 @@ const handleAIInput = (value: string) => {
     console.log('AI联想', aiSuggestions.value, aiSource.value)
   }, 300)
 }
+const loadHotSearches = async () => {
+  try {
+    const res = await getHotSearches()
+
+    if (res.data?.length) {
+      hotSearches.value = res.data
+    } else {
+      hotSearches.value = fallbackHotSearches
+    }
+  } catch {
+    hotSearches.value = fallbackHotSearches
+  }
+
+  console.log('热门搜索', hotSearches.value)
+}
 onMounted(() => {
   loadHistory()
+  loadHotSearches()
   console.log('搜索历史', history.value)
 })
 onBeforeUnmount(() => {

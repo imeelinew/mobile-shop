@@ -29,7 +29,7 @@ const getFallbackSuggestions = (keyword: string) => {
     `${keyword}排行榜`
   ].map(item => item.slice(0, 10))
 }
-
+//函数解释：尝试使用AI生成内容，如果失败则使用本地规则
 export const tryAI = async <T>(
   name: string,
   promptText: string,

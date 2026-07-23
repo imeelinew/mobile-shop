@@ -1,11 +1,15 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { goProductDetail } from '@/api/product'
+import { getProductDetail } from '@/api/product'
+import { getProductSellingPoints } from '@/ai/productSellingPoints'
+
 const router = useRouter()
 const route = useRoute()
 const product = ref<any>(null)
 const loading = ref(false)
+const aiSellingPoints = ref<string[]>([])
+const aiSource = ref('fallback')
 
 const loadProductDetail = async () => {
   const prodId = Number(route.query.prodId)
@@ -13,7 +17,7 @@ const loadProductDetail = async () => {
   loading.value = true
 
   try {
-    const res = await goProductDetail(prodId)
+    const res = await getProductDetail(prodId)
     product.value = res.data
     console.log(product.value, 'product')
   } catch (error) {
@@ -21,6 +25,12 @@ const loadProductDetail = async () => {
   } finally {
     loading.value = false
   }
+  if (product.value) {
+    const res = await getProductSellingPoints(product.value)
+    aiSource.value = res.source
+    aiSellingPoints.value = res.result
+  }
+  console.log(aiSellingPoints.value, 'ai切分后的卖点4条数据')
 }
 const goBack = () => {
   router.back()
@@ -61,6 +71,13 @@ onMounted(() => {
     </div>
     <van-empty v-else description="暂无数据" />
 
+    <div class="ai-selling-points">
+      <strong style="font-size: 18px;">🤖AI推荐卖点</strong>
+      <van-tag type="primary">{{ aiSource === 'openai' ? 'DeepSeek AI' : 'AI推荐' }}</van-tag>
+      <div class="ai-selling-point" v-for="point in aiSellingPoints" :key="point">
+        <span class="ai-selling-point-text">{{ point }}</span>
+      </div>
+    </div>
   </div>
 </template>
 <style lang="scss" scoped>
@@ -125,6 +142,11 @@ onMounted(() => {
     span {
       font-size: 32px;
     }
+  }
+
+  .ai-selling-points {
+    padding: 32px;
+    font-size: 28px;
   }
 }
 </style>
