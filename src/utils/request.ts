@@ -31,4 +31,11 @@ export const get = (
 ): Promise<any> => {
     return request.get(url, { params })
 }
+export const post = (
+    url: string,
+    data?: any,
+    config?: any
+): Promise<any> => {
+    return request.post(url, data, config)
+}
 export default request

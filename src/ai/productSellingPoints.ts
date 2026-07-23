@@ -1,4 +1,25 @@
 import { tryAI } from './searchSuggestions'
+
+const getCategorySellingPoints = (prodName: string) => {
+    const points: string[] = []
+    if (prodName.includes('手机') || prodName.includes('数码')) {
+        points.push(
+            '📱 强劲性能，日常使用流畅稳定',
+            '🔋 超长续航，告别频繁充电烦恼',
+            '📸 高清影像，轻松记录精彩瞬间',
+            '✨ 精致设计，颜值与手感兼备',
+        )
+    }
+    else if (prodName.includes('鞋') || prodName.includes('跑')) {
+        points.push(
+            '👟 轻盈舒适，长时间穿着不累脚',
+            '🌬️ 透气设计，保持双脚清爽舒适',
+            '🛡️ 稳定支撑，运动过程更加安心',
+            '🎨 潮流外观，轻松搭配多种风格',
+        )
+    }
+    return points
+}
 export const getProductSellingPoints = async (data: any) => {
     const prodName = data.prodName || ''
     const price = data.price || 0
@@ -29,9 +50,21 @@ export const getProductSellingPoints = async (data: any) => {
         '💎 精选品质，满足日常使用需求',
         '💰 价格实惠，轻松享受优质商品'
     ]
-    const response = await tryAI('商品热点', prompt, () =>
-        localSellingPoints
-    )
+    // const response = await tryAI('商品热点', prompt, () =>
+    //     localSellingPoints
+    // )
+
+    const response = await tryAI('商品热点', prompt, () => {
+        const res = getCategorySellingPoints(prodName)
+        if (res.length > 0) {
+            return res
+        } else {
+            return {
+                result: response.result,
+                source: 'fallback'
+            }
+        }
+    })
     if (response.source === 'openai') {
 
         const splitedPoints = (response.result as string).split('\n')

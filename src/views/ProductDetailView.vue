@@ -3,14 +3,19 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getProductDetail } from '@/api/product'
 import { getProductSellingPoints } from '@/ai/productSellingPoints'
-
+import { getCollectionStatus, toggleCollection } from '@/api/product'
+import { showSuccessToast, showFailToast } from 'vant'
+import 'vant/es/toast/style'
 const router = useRouter()
 const route = useRoute()
 const product = ref<any>(null)
+
+//product的图片数组，用逗号分隔
+const productImages = ref<string[]>([])
 const loading = ref(false)
 const aiSellingPoints = ref<string[]>([])
 const aiSource = ref('fallback')
-
+const isCollected = ref(false)
 const loadProductDetail = async () => {
   const prodId = Number(route.query.prodId)
   if (!prodId) return
@@ -19,7 +24,11 @@ const loadProductDetail = async () => {
   try {
     const res = await getProductDetail(prodId)
     product.value = res.data
-    console.log(product.value, 'product')
+    productImages.value = product.value.imgs.split(',')
+    console.log(productImages.value, 'product图片集')
+    //获取收藏状态
+    const collectionStatus = await getCollectionStatus(prodId)
+    isCollected.value = collectionStatus.data
   } catch (error) {
     console.error('获取商品详情失败:', error)
   } finally {
@@ -30,7 +39,20 @@ const loadProductDetail = async () => {
     aiSource.value = res.source
     aiSellingPoints.value = res.result
   }
+  console.log(product.value, '商品数据')
   console.log(aiSellingPoints.value, 'ai切分后的卖点4条数据')
+}
+const handleToggleCollection = async () => {
+  if (!product.value) return
+  const res = await toggleCollection(product.value.prodId)
+  if (res.success) {
+    const res = await getCollectionStatus(product.value.prodId)
+    isCollected.value = res.data
+    showSuccessToast(isCollected.value ? '收藏成功' : '取消收藏成功')
+  } else {
+    showFailToast(res.msg || '操作失败')
+  }
+  console.log(isCollected.value, '收藏状态')
 }
 const goBack = () => {
   router.back()
@@ -48,19 +70,20 @@ onMounted(() => {
     </div>
 
     <div v-else-if="product" class="detail-content">
-      <div class="product-image">
-        <van-image width="100%" height="100%" fit="contain" :src="product.pic" />
-
-      </div>
+      <van-swipe class="my-swipe" :autoplay="3000" indicator-color="white">
+        <van-swipe-item v-for="image in productImages" :key="image">
+          <van-image width="100%" height="100%" fit="contain" :src="image" />
+        </van-swipe-item>
+      </van-swipe>
 
       <div class="product-info">
         <div class="info-left">
           <h1 class="product-title">{{ product.prodName }}</h1>
           <p class="product-brief">{{ product.brief }}</p>
         </div>
-        <div class="info-right">
-          <van-icon name="like" color="#ee0a24" />
-          <span>收藏</span>
+        <div class="info-right" @click="handleToggleCollection">
+          <van-icon name="like" :color="isCollected ? '#ee0a24' : '#969799'" />
+          <span>{{ isCollected ? '已收藏' : '收藏' }}</span>
         </div>
       </div>
       <p class="product-price">
@@ -174,7 +197,7 @@ onMounted(() => {
       font-size: 24px;
       line-height: 1.5;
 
-      & + .ai-selling-point {
+      &+.ai-selling-point {
         margin-top: 14px;
       }
     }
