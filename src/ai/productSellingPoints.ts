@@ -48,7 +48,6 @@ export const getProductSellingPoints = async (data: any) => {
         '✅ 正品保障，品质可靠更放心',
         '🚚 现货速发，下单无需长久等待',
         '💎 精选品质，满足日常使用需求',
-        '💰 价格实惠，轻松享受优质商品'
     ]
     // const response = await tryAI('商品热点', prompt, () =>
     //     localSellingPoints
@@ -59,10 +58,7 @@ export const getProductSellingPoints = async (data: any) => {
         if (res.length > 0) {
             return res
         } else {
-            return {
-                result: response.result,
-                source: 'fallback'
-            }
+            return localSellingPoints
         }
     })
     if (response.source === 'openai') {
@@ -75,8 +71,8 @@ export const getProductSellingPoints = async (data: any) => {
         }
     } else {
         return {
-            result: localSellingPoints,
-            source: 'fallback'
+            result: response.result as string[],
+            source: 'fallback',
         }
     }
 }

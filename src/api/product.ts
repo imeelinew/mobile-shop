@@ -17,3 +17,8 @@ export const toggleCollection = (prodId: number) => {
         }
     })
 }
+export const getProductCommentData = (prodId: number) => {
+    return get('/prodComm/prodCommData', {
+        prodId
+    })
+}
