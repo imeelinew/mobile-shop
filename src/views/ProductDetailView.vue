@@ -71,9 +71,13 @@ onMounted(() => {
     </div>
     <van-empty v-else description="暂无数据" />
 
-    <div class="ai-selling-points">
-      <strong style="font-size: 18px;">🤖AI推荐卖点</strong>
-      <van-tag type="primary">{{ aiSource === 'openai' ? 'DeepSeek AI' : 'AI推荐' }}</van-tag>
+    <div v-if="aiSellingPoints.length" class="ai-selling-points">
+      <div class="ai-selling-title">
+        <strong>🤖 AI智能卖点</strong>
+        <van-tag plain :type="aiSource === 'openai' ? 'primary' : 'success'">
+          {{ aiSource === 'openai' ? 'DeepSeek AI' : '本地' }}
+        </van-tag>
+      </div>
       <div class="ai-selling-point" v-for="point in aiSellingPoints" :key="point">
         <span class="ai-selling-point-text">{{ point }}</span>
       </div>
@@ -145,8 +149,35 @@ onMounted(() => {
   }
 
   .ai-selling-points {
-    padding: 32px;
-    font-size: 28px;
+    margin: 24px 28px;
+    padding: 28px;
+    border-radius: 14px;
+    background: #f4f3ff;
+
+    .ai-selling-title {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 24px;
+
+      strong {
+        font-size: 34px;
+      }
+    }
+
+    .ai-selling-point {
+      padding: 20px 24px;
+      border-left: 6px solid #1989fa;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.82);
+      color: #323233;
+      font-size: 24px;
+      line-height: 1.5;
+
+      & + .ai-selling-point {
+        margin-top: 14px;
+      }
+    }
   }
 }
 </style>
