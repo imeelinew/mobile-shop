@@ -20,6 +20,11 @@ const router = createRouter({
       component: () => import('../views/SearchView.vue'),
     },
     {
+      path: '/product-detail',
+      name: 'product-detail',
+      component: () => import('../views/ProductDetailView.vue'),
+    },
+    {
       path: '/',
       component: () => import('../components/Layout.vue'),
       redirect: '/home',

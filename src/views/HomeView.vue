@@ -10,7 +10,24 @@ const keyword = ref<string>('')
 const goSearch = () => {
     router.push('/search')
 }
-
+const goDetail = (prodId: number) => {
+    router.push({
+        path: '/product-detail',
+        query: {
+            prodId
+        }
+    }
+    )
+}
+const goCategory = (title: string) => {
+    sessionStorage.setItem('fromHome', '1')
+    router.push({
+        path: '/category',
+        query: {
+            value: title
+        }
+    })
+}
 const bannerList = ref<Banner[]>([])
 const noticeList = ref<Notice[]>([])
 const productGroups = ref<ProductGroup[]>([])
@@ -68,11 +85,12 @@ const navItems = [
     <section v-for="group in productGroups" :key="group.id" class="product-group">
         <header class="group-header">
             <h2>{{ group.title }}</h2>
-            <span style="font-size: 16px;">查看更多</span>
+            <span style="font-size: 16px;" @click="goCategory(group.title)">查看更多</span>
         </header>
 
         <div class="product-grid">
-            <article v-for="product in group.productDtoList" :key="product.prodId" class="product-card">
+            <article v-for="product in group.productDtoList" :key="product.prodId" class="product-card"
+                @click="goDetail(product.prodId)">
                 <img class="product-image" :src="product.pic" :alt="product.prodName" />
 
                 <div class="product-name">
