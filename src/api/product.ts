@@ -22,3 +22,8 @@ export const getProductCommentData = (prodId: number) => {
         prodId
     })
 }
+export const getSkuList = (prodId: number) => {
+    return get('/sku/getSkuList', {
+        prodId
+    })
+}

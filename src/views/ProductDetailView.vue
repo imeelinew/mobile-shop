@@ -3,8 +3,9 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getProductDetail } from '@/api/product'
 import { getProductSellingPoints } from '@/ai/productSellingPoints'
-import { getCollectionStatus, toggleCollection, getProductCommentData } from '@/api/product'
+import { getCollectionStatus, toggleCollection, getProductCommentData,getSkuList } from '@/api/product'
 import { showSuccessToast, showFailToast } from 'vant'
+import ActionPanel from '@/components/ActionPanel.vue'
 import 'vant/es/toast/style'
 const router = useRouter()
 const route = useRoute()
@@ -21,7 +22,11 @@ const isCollected = ref(false)
 const aiLoading = ref(true)
 //评论数据
 const commentData = ref<any>(null)
-
+//动作面板
+const isShowActionPanel = ref(false)
+//产品规格列表
+const skuList = ref<any[]>([])
+const selectedSku = ref<any>(null)
 //加载产品数据
 const loadProductDetail = async () => {
   const prodId = Number(route.query.prodId)
@@ -32,7 +37,15 @@ const loadProductDetail = async () => {
     const res = await getProductDetail(prodId)
     product.value = res.data
     productImages.value = product.value.imgs.split(',')
-    console.log(productImages.value, 'product图片集')
+
+    //产品规格
+    skuList.value = product.value.skuList || []
+    //默认选中第一个规格
+    selectedSku.value = skuList.value[0]
+    console.log(skuList.value, '产品规格列表')
+    console.log(selectedSku.value, '默认选中规格')
+    // console.log(productImages.value, 'product图片集')
+
     //获取收藏状态
     const collectionStatus = await getCollectionStatus(prodId)
     isCollected.value = collectionStatus.data
@@ -50,8 +63,8 @@ const loadProductDetail = async () => {
     aiSellingPoints.value = res.result
     aiLoading.value = false
   }
-  console.log(product.value, '商品数据')
-  console.log(aiSellingPoints.value, 'ai切分后的卖点4条数据')
+  // console.log(product.value, '商品数据')
+  // console.log(aiSellingPoints.value, 'ai切分后的卖点4条数据')
 }
 
 //处理切换收藏状态
@@ -67,13 +80,24 @@ const handleToggleCollection = async () => {
   }
   console.log(isCollected.value, '收藏状态')
 }
+//处理展开动作面板
+const handleShowActionPanel = () => {
+  isShowActionPanel.value = !isShowActionPanel.value
+  console.log(isShowActionPanel.value, '展开动作面板')
+}
 
+// const loadskuList = async() => {
+//   const res = await getSkuList(product.value.prodId)
+//     skuList.value = res.data
+//     console.log(skuList.value, '产品规格列表')
+// }
 const goBack = () => {
   router.back()
 }
 
 onMounted(() => {
   loadProductDetail()
+  // loadskuList()
 })
 </script>
 <template>
@@ -127,9 +151,16 @@ onMounted(() => {
     </div>
     <van-divider />
     <!-- 下方暂未完成 -->
-    <div class="selected-row">
+    <div class="selected-row" @click="handleShowActionPanel">
       <span>已选</span>
+      <span>{{ selectedSku?.skuName }}</span>
     </div>
+
+      <van-action-sheet v-model:show="isShowActionPanel" title="标题">
+        <div class="action-sheet-content">内容</div>
+        <ActionPanel :skuList="skuList"></ActionPanel>
+      </van-action-sheet>
+
 
     <van-divider />
     <div v-if="commentData" class="comment-summary">
@@ -301,6 +332,13 @@ onMounted(() => {
       max-width: 100% !important;
       height: auto !important;
     }
+  }
+
+  .action-sheet-content {
+    padding: 24px 28px;
+    background: #fff;
+    font-size: 24px;
+    text-align: center;
   }
 }
 </style>

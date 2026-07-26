@@ -20,7 +20,7 @@ export default defineConfig({
     Components({
       resolvers: [VantResolver()],
     }),
-    vueDevTools(),
+    // vueDevTools(),
   ],
   resolve: {
     alias: {

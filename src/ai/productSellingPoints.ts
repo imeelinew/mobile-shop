@@ -43,7 +43,7 @@ export const getProductSellingPoints = async (data: any) => {
 5. 直接输出4行，每行一条
 6. 不要编号，不要解释
   `.trim()
-    console.log(prompt, 'prompt')
+    // console.log(prompt, 'prompt')
     const localSellingPoints = [
         '✅ 正品保障，品质可靠更放心',
         '🚚 现货速发，下单无需长久等待',
@@ -64,7 +64,7 @@ export const getProductSellingPoints = async (data: any) => {
     if (response.source === 'openai') {
 
         const splitedPoints = (response.result as string).split('\n')
-        console.log(splitedPoints, '拆分后的卖点4条数据')
+        // console.log(splitedPoints, '拆分后的卖点4条数据')
         return {
             result: splitedPoints,
             source: 'openai'

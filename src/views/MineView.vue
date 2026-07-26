@@ -1,4 +1,14 @@
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+import { onMounted, ref } from 'vue'
+import { getOrderCount } from '@/api/order'
+
+const orderCount = ref<any>({})
+
+onMounted(async () => {
+    const res = await getOrderCount()
+    orderCount.value = res.data
+})
+</script>
 <template>
     <div class="mine-page">
         <div class="profile">
@@ -18,10 +28,10 @@
         <van-divider class="section-divider" />
         <div class="info">
             <van-grid :border="false">
-                <van-grid-item icon="balance-pay" text="待支付" />
-                <van-grid-item icon="logistics" text="待发货" />
-                <van-grid-item icon="description" text="待签收" />
-                <van-grid-item icon="passed" text="已完成" />
+                <van-grid-item icon="balance-pay" text="待支付" :badge="orderCount.unPay" />
+                <van-grid-item icon="logistics" text="待发货" :badge="orderCount.payed" />
+                <van-grid-item icon="description" text="待签收" :badge="orderCount.consignment" />
+                <van-grid-item icon="passed" text="已完成" :badge="orderCount.success" />
             </van-grid>
         </div>
 
