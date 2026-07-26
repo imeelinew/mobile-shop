@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getProductDetail } from '@/api/product'
 import { getProductSellingPoints } from '@/ai/productSellingPoints'
-import { getCollectionStatus, toggleCollection, getProductCommentData,getSkuList } from '@/api/product'
+import { getCollectionStatus, toggleCollection, getProductCommentData, getSkuList } from '@/api/product'
 import { showSuccessToast, showFailToast } from 'vant'
 import ActionPanel from '@/components/ActionPanel.vue'
 import 'vant/es/toast/style'
@@ -91,6 +91,10 @@ const handleShowActionPanel = () => {
 //     skuList.value = res.data
 //     console.log(skuList.value, '产品规格列表')
 // }
+const handleSkuConfirm = (sku: any) => {
+  selectedSku.value = sku
+  isShowActionPanel.value = false
+}
 const goBack = () => {
   router.back()
 }
@@ -156,10 +160,9 @@ onMounted(() => {
       <span>{{ selectedSku?.skuName }}</span>
     </div>
 
-      <van-action-sheet v-model:show="isShowActionPanel" title="标题">
-        <div class="action-sheet-content">内容</div>
-        <ActionPanel :skuList="skuList"></ActionPanel>
-      </van-action-sheet>
+    <van-action-sheet v-model:show="isShowActionPanel" title="选择产品列表">
+      <ActionPanel :sku-list="skuList" :selected-sku="selectedSku" @confirm="handleSkuConfirm" />
+    </van-action-sheet>
 
 
     <van-divider />
