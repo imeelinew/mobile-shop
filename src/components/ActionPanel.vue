@@ -24,6 +24,8 @@ const propertyMap = computed(() => {
     const result: any = {}
 
     props.skuList.forEach((sku: any) => {
+        if (!sku.properties) return
+
         const properties = sku.properties.split(';')
 
         properties.forEach((property: string) => {
@@ -69,7 +71,7 @@ const confirmSelection = () => {
 
     const matchedSku = props.skuList.find(
         (sku: any) => sku.properties === properties
-    )
+    ) || props.selectedSku
 
     if (matchedSku) {
         emit('confirm', matchedSku)

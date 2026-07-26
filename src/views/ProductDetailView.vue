@@ -3,7 +3,8 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getProductDetail } from '@/api/product'
 import { getProductSellingPoints } from '@/ai/productSellingPoints'
-import { getCollectionStatus, toggleCollection, getProductCommentData, getSkuList } from '@/api/product'
+import { getCollectionStatus, toggleCollection, getProductCommentData } from '@/api/product'
+import { addCart } from '@/api/cart'
 import { showSuccessToast, showFailToast } from 'vant'
 import ActionPanel from '@/components/ActionPanel.vue'
 import 'vant/es/toast/style'
@@ -24,6 +25,9 @@ const aiLoading = ref(true)
 const commentData = ref<any>(null)
 //动作面板
 const isShowActionPanel = ref(false)
+//购买面板
+const isShowBuyPanel = ref(false)
+const quantity = ref(1)
 //产品规格列表
 const skuList = ref<any[]>([])
 const selectedSku = ref<any>(null)
@@ -85,15 +89,53 @@ const handleShowActionPanel = () => {
   isShowActionPanel.value = !isShowActionPanel.value
   console.log(isShowActionPanel.value, '展开动作面板')
 }
-
-// const loadskuList = async() => {
-//   const res = await getSkuList(product.value.prodId)
-//     skuList.value = res.data
-//     console.log(skuList.value, '产品规格列表')
-// }
+const handleShowBuyPanel = () => {
+  isShowBuyPanel.value = true
+}
 const handleSkuConfirm = (sku: any) => {
   selectedSku.value = sku
   isShowActionPanel.value = false
+}
+const handleAddCart = async () => {
+  if (!product.value || !selectedSku.value) return
+
+  try {
+    const res = await addCart({
+      basketId: 0,
+      prodId: product.value.prodId,
+      skuId: selectedSku.value.skuId,
+      shopId: product.value.shopId,
+      count: quantity.value,
+    })
+
+    if (res.success) {
+      showSuccessToast('添加购物车成功')
+      isShowBuyPanel.value = false
+    } else {
+      showFailToast(res.msg || '添加购物车失败')
+    }
+  } catch (error) {
+    showFailToast('添加购物车失败')
+  }
+}
+const handleBuyNow = () => {
+  if (!product.value || !selectedSku.value) return
+
+  const orderParams = {
+    basketIds: [],
+    orderItem: {
+      prodId: product.value.prodId,
+      skuId: selectedSku.value.skuId,
+      prodCount: quantity.value,
+      shopId: product.value.shopId,
+    },
+    addrId: 0,
+    userChangeCoupon: 0,
+    couponIds: [],
+  }
+
+  sessionStorage.setItem('confirmOrder', JSON.stringify(orderParams))
+  router.push('/order-confirm')
 }
 const goBack = () => {
   router.back()
@@ -101,7 +143,6 @@ const goBack = () => {
 
 onMounted(() => {
   loadProductDetail()
-  // loadskuList()
 })
 </script>
 <template>
@@ -179,12 +220,30 @@ onMounted(() => {
     </div>
     <div v-if="product?.content" class="product-content" v-html="product.content"></div>
   </div>
+  <van-action-sheet v-model:show="isShowBuyPanel" title="确认商品">
+    <van-card
+      :thumb="selectedSku?.pic"
+      :title="selectedSku?.skuName"
+      :desc="product?.brief"
+      :price="selectedSku?.price"
+      :num="quantity"
+    />
+    <div class="quantity-row">
+      <span>购买数量</span>
+      <van-stepper v-model="quantity" min="1" />
+    </div>
+    <ActionPanel :sku-list="skuList" :selected-sku="selectedSku" @confirm="handleSkuConfirm" />
+    <div class="buy-actions">
+      <van-button block type="warning" @click="handleAddCart">加入购物车</van-button>
+      <van-button block type="danger" @click="handleBuyNow">立即购买</van-button>
+    </div>
+  </van-action-sheet>
   <!-- 底部操作栏 -->
   <van-action-bar>
     <van-action-bar-icon icon="cart-o" text="购物车" />
     <van-action-bar-icon icon="shop-o" text="店铺" />
-    <van-action-bar-button type="warning" text="加入购物车" />
-    <van-action-bar-button type="danger" text="立即购买" />
+    <van-action-bar-button type="warning" text="加入购物车" @click="handleShowBuyPanel" />
+    <van-action-bar-button type="danger" text="立即购买" @click="handleShowBuyPanel" />
   </van-action-bar>
 </template>
 <style lang="scss" scoped>
@@ -342,6 +401,19 @@ onMounted(() => {
     background: #fff;
     font-size: 24px;
     text-align: center;
+  }
+
+  .quantity-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 24px 28px;
+    background: #fff;
+  }
+
+  .buy-actions {
+    display: flex;
+    padding: 24px 28px;
+    background: #fff;
   }
 }
 </style>

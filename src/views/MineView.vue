@@ -1,13 +1,21 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { getOrderCount } from '@/api/order'
+import { removeToken } from '@/utils/token'
 
+const router = useRouter()
 const orderCount = ref<any>({})
 
 onMounted(async () => {
     const res = await getOrderCount()
     orderCount.value = res.data
 })
+
+const logout = () => {
+    removeToken()
+    router.replace('/login')
+}
 </script>
 <template>
     <div class="mine-page">
@@ -67,7 +75,7 @@ onMounted(async () => {
         </div>
 
         <div class="logout">
-            <van-button type="danger">退出登录</van-button>
+            <van-button type="danger" @click="logout">退出登录</van-button>
         </div>
     </div>
 </template>
