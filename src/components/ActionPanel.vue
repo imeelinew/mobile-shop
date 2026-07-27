@@ -90,9 +90,9 @@ const confirmSelection = () => {
                 </van-button>
             </div>
         </div>
-        <van-button class="confirm-button" block type="danger" @click="confirmSelection">
+        <!-- <van-button class="confirm-button" block type="danger" @click="confirmSelection">
             确定
-        </van-button>
+        </van-button> -->
     </div>
 </template>
 <style lang="scss" scoped>

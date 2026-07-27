@@ -38,4 +38,11 @@ export const post = (
 ): Promise<any> => {
     return request.post(url, data, config)
 }
+
+export const del = (
+    url: string,
+    data?: any
+): Promise<any> => {
+    return request.delete(url, { data })
+}
 export default request
