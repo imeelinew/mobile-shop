@@ -27,6 +27,8 @@ const loadCart = async () => {
             getCartInfo(),
             getAddressList(),
         ])
+        console.log(cartRes.data,'cartRes.data')
+        console.log(addressRes.data,'addressRes.data')
         cartList.value = cartRes.data || []
 
         const addressList = addressRes.data || []
@@ -78,6 +80,7 @@ onMounted(loadCart)
         <van-empty v-else description="购物车还是空的" />
 
         <van-submit-bar
+            class="cart-submit-bar"
             :price="totalPrice * 100"
             button-text="提交订单"
         >
@@ -117,5 +120,9 @@ onMounted(loadCart)
     .van-card {
         flex: 1;
     }
+}
+
+.cart-submit-bar {
+    bottom: 100px;
 }
 </style>

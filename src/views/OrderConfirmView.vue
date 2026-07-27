@@ -61,7 +61,9 @@ const handleSubmitOrder = async () => {
     }
 }
 
-onMounted(loadOrder)
+onMounted(() => {
+    loadOrder()
+})
 </script>
 
 <template>
