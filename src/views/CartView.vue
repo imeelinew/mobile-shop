@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { getCartInfo, getCartTotal, deleteCartItem } from '@/api/cart'
+import { getCartInfo, getCartTotal, deleteCartItem, addCart } from '@/api/cart'
 import { getAddressList } from '@/api/order'
-
+import { showSuccessToast, showFailToast } from 'vant'
 const loading = ref(true)
 const cartList = ref<any[]>([])
 const defaultAddress = ref<any>(null)
@@ -79,10 +79,33 @@ const loadCart = async () => {
         loading.value = false
     }
 }
+// TODO: 快速连续点击加减号会触发多个并发请求，响应顺序不保证，可能导致 totalPrice 显示错误（竞态问题）。
+// 修复思路：给每个 item 加一个 updating 状态，请求进行中禁用该项的 stepper，请求结束后再解除禁用。
+//切换商品数量
+const changeCartItemCount = async (item: any, count: number) => {
+    const res = await addCart({
+        basketId: item.basketId,
+        prodId: item.prodId,
+        skuId: item.skuId,
+        shopId: item.shopId,
+        count: count,
+    })
 
+    const nextCount = item.prodCount + count
+    if (nextCount > 0) {
+        item.prodCount = nextCount
+    } else if (nextCount <= 0) {
+        handleDeleteCartItem([item.basketId])
+    }
+    getTotalPrice()
+}
+//stepper
+const onStepperChange = (item: any, newCount: number) => {
+    const delta = newCount - item.prodCount
+    changeCartItemCount(item, delta)
+}
 onMounted(() => {
     loadCart()
-    getTotalPrice()
 })
 </script>
 
@@ -109,10 +132,15 @@ onMounted(() => {
                     <div v-for="item in discount.shopCartItems" :key="item.basketId" class="cart-item">
                         <van-checkbox v-model="item.checked" checked-color="#ee0a24" />
                         <van-swipe-cell>
-                            <van-card :thumb="item.pic" :title="item.prodName" :desc="item.skuName" :price="item.price"
-                                :num="item.prodCount" />
+                            <van-card :thumb="item.pic" :title="item.prodName" :desc="item.skuName" :price="item.price">
+                                <template #num>
+                                    <van-stepper :model-value="item.prodCount"
+                                        @change="onStepperChange(item, $event)" />
+                                </template>
+                            </van-card>
                             <template #right>
-                                <van-button square text="删除" type="danger" class="delete-button" @click="handleDeleteCartItem([item.basketId])" />
+                                <van-button square text="删除" type="danger" class="delete-button"
+                                    @click="handleDeleteCartItem([item.basketId])" />
                             </template>
                         </van-swipe-cell>
                     </div>
@@ -125,6 +153,9 @@ onMounted(() => {
         <van-submit-bar class="cart-submit-bar" :price="totalPrice * 100" button-text="提交订单">
             <van-checkbox :model-value="allChecked" checked-color="#ee0a24"
                 @update:model-value="toggleAllChecked">全选</van-checkbox>
+            <div class="clear-button" v-if="allChecked" @click="handleDeleteCartItem(selectedBasketIds)">
+                清空
+            </div>
         </van-submit-bar>
     </div>
 </template>
@@ -157,15 +188,22 @@ onMounted(() => {
     align-items: center;
     padding-left: 28px;
 
-    .van-card {
+    .van-swipe-cell {
         flex: 1;
     }
 }
 
 .cart-submit-bar {
     bottom: 100px;
+
+    .clear-button {
+        color: #ee0a24;
+        font-size: 20px;
+        margin-left: 10px;
+    }
 }
+
 .delete-button {
     height: 100%;
-  }
+}
 </style>
