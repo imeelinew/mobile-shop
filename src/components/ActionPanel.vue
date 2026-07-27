@@ -83,11 +83,16 @@ const confirmSelection = () => {
         <div v-for="(values, name) in propertyMap" :key="name" class="spec-group">
             <div class="spec-title">{{ name }}</div>
             <div class="spec-options">
-                <van-button v-for="value in values" :key="value" size="small"
-                    :plain="selectedProps[String(name)] !== value" type="danger"
-                    @click="selectProperty(String(name), value)">
+                <button
+                    v-for="value in values"
+                    :key="value"
+                    type="button"
+                    class="spec-option"
+                    :class="{ active: selectedProps[String(name)] === value }"
+                    @click="selectProperty(String(name), value)"
+                >
                     {{ value }}
-                </van-button>
+                </button>
             </div>
         </div>
         <!-- <van-button class="confirm-button" block type="danger" @click="confirmSelection">
@@ -97,24 +102,42 @@ const confirmSelection = () => {
 </template>
 <style lang="scss" scoped>
 .action-panel {
-    padding: 0 28px 24px;
+    padding: 8px 28px 32px;
 }
 
 .spec-group {
-    &+.spec-group {
-        margin-top: 24px;
+    & + .spec-group {
+        margin-top: 28px;
     }
 }
 
 .spec-title {
-    margin-bottom: 16px;
-    font-size: 26px;
+    margin-bottom: 18px;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--shop-text);
 }
 
 .spec-options {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
+}
+
+.spec-option {
+    min-width: 96px;
+    padding: 12px 22px;
+    border: 1px solid var(--shop-primary);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--shop-primary);
+    font-size: 24px;
+    line-height: 1.3;
+
+    &.active {
+        background: var(--shop-primary);
+        color: #fff;
+    }
 }
 
 .confirm-button {

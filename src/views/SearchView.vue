@@ -135,54 +135,160 @@ onBeforeUnmount(() => {
   <div class="search-page">
     <van-nav-bar title="搜索" left-text="返回" left-arrow @click-left="router.back()" />
 
-    <van-search v-model="keyword" placeholder="请输入搜索关键词" show-action @cancel="resetSearch" clearable @search="doSearch"
-      @clear="resetSearch" @update:model-value="handleAIInput" />
-    <van-loading v-if="loading">搜索中...</van-loading>
+    <van-search v-model="keyword" placeholder="请输入搜索关键词" shape="round" show-action @cancel="resetSearch"
+      clearable @search="doSearch" @clear="resetSearch" @update:model-value="handleAIInput" />
+
+    <van-loading v-if="loading" class="search-loading" vertical>搜索中...</van-loading>
+
     <template v-else-if="hasSearched">
-      <div v-if="products.length">
-        <van-card v-for="item in products" :key="item.prodId" :title="item.prodName" :price="item.price"
-          :thumb="item.pic">
-        </van-card>
+      <div v-if="products.length" class="result-list">
+        <van-card v-for="item in products" :key="item.prodId" class="result-card" :title="item.prodName"
+          :price="item.price" :thumb="item.pic" />
       </div>
       <van-empty v-else description="暂无搜索结果" />
     </template>
-    <div v-else>
-      <h3>搜索历史</h3>
-      <van-button v-if="history.length" type="primary" size="small" @click="clearHistory">清空历史</van-button>
-      <div v-if="history.length">
-        <van-tag v-for="item in history" :key="item" size="large" class="history-item" closeable @click="doSearch(item)"
-          @close.stop="removeHistory(item)">
-          {{ item }}
-        </van-tag>
-      </div>
-      <van-empty v-else description="暂无搜索历史" />
-      <div v-if="keyword.trim()" class="ai-section">
-        <h3>
-          🤖 AI 搜索建议
-          <van-tag :type="aiSource === 'openai' ? 'primary' : 'success'">
-            {{ aiSource === 'openai' ? 'AI' : '本地' }}
+
+    <div v-else class="search-panels">
+      <section class="panel">
+        <header class="panel-header">
+          <div class="panel-title">
+            <van-icon name="clock-o" />
+            <h3>搜索历史</h3>
+          </div>
+          <button v-if="history.length" class="clear-btn" type="button" @click="clearHistory">
+            <van-icon name="delete-o" />
+            清空
+          </button>
+        </header>
+
+        <div v-if="history.length" class="tag-list">
+          <van-tag v-for="item in history" :key="item" size="large" class="history-item" closeable
+            @click="doSearch(item)" @close.stop="removeHistory(item)">
+            {{ item }}
           </van-tag>
-        </h3>
+        </div>
+        <van-empty v-else image-size="80" description="暂无搜索历史" />
+      </section>
+
+      <section v-if="keyword.trim()" class="panel ai-section">
+        <header class="panel-header">
+          <div class="panel-title">
+            <van-icon name="smile-o" />
+            <h3>AI 搜索建议</h3>
+            <van-tag :type="aiSource === 'openai' ? 'primary' : 'success'" class="source-tag">
+              {{ aiSource === 'openai' ? 'AI' : '本地' }}
+            </van-tag>
+          </div>
+        </header>
 
         <van-loading v-if="aiLoading" size="20px">
           思考中...
         </van-loading>
 
-        <div v-else-if="aiSuggestions.length">
+        <div v-else-if="aiSuggestions.length" class="tag-list">
           <van-tag v-for="item in aiSuggestions" :key="item" size="large" plain type="success" class="suggestion-item"
             @click="doSearch(item)">
             {{ item }}
           </van-tag>
         </div>
-      </div>
+      </section>
     </div>
-
   </div>
 </template>
 
 <style lang="scss" scoped>
 .search-page {
   min-height: 100vh;
-  background: #f7f8fa;
+  background: var(--shop-bg);
+}
+
+.search-loading {
+  padding-top: 120px;
+}
+
+.result-list {
+  padding: 12px 16px 24px;
+}
+
+.result-card {
+  margin-bottom: 16px;
+  border-radius: var(--shop-radius-sm);
+  overflow: hidden;
+  background: var(--shop-card);
+
+  :deep(.van-card__price) {
+    color: var(--shop-primary);
+    font-weight: 700;
+  }
+}
+
+.search-panels {
+  padding: 8px 20px 32px;
+}
+
+.panel {
+  margin-top: 16px;
+  padding: 24px;
+  border-radius: var(--shop-radius);
+  background: var(--shop-card);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  h3 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+  }
+
+  .van-icon {
+    font-size: 28px;
+    color: var(--shop-text-secondary);
+  }
+}
+
+.source-tag {
+  margin-left: 4px;
+}
+
+.clear-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--shop-text-secondary);
+  font-size: 24px;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.history-item {
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: #f2f3f5;
+  color: var(--shop-text);
+  border: 1px solid var(--shop-border);
+}
+
+.suggestion-item {
+  padding: 10px 18px;
+  border-radius: 999px;
 }
 </style>

@@ -22,7 +22,7 @@ watch(
 )
 </script>
 <template>
-    <van-tabbar v-model="active" active-color="#1989fa">
+    <van-tabbar v-model="active" active-color="#ee0a24" inactive-color="#646566" safe-area-inset-bottom>
         <van-tabbar-item to="/home" icon="home-o">
             首页
         </van-tabbar-item>
@@ -40,4 +40,13 @@ watch(
         </van-tabbar-item>
     </van-tabbar>
 </template>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+:deep(.van-tabbar) {
+    border-top: 1px solid var(--shop-border);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
+}
+
+:deep(.van-tabbar-item__text) {
+    font-size: 20px;
+}
+</style>

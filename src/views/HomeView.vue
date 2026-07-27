@@ -63,82 +63,138 @@ const navItems = [
 ]
 </script>
 <template>
-    <!-- 搜索 -->
-    <van-search v-model="keyword" placeholder="请输入搜索关键词" @click="goSearch" />
-    <van-swipe :autoplay="3000" lazy-render>
-        <van-swipe-item v-for="banner in bannerList" :key="banner.imgUrl">
-            <img class="banner-image" :src="banner.imgUrl" alt="商城轮播图" />
-        </van-swipe-item>
-    </van-swipe>
-    <van-grid>
-        <van-grid-item v-for="item in navItems" :key="item.text" :icon="item.icon" :text="item.text" />
-    </van-grid>
-    <!-- 公告 -->
-    <van-notice-bar left-icon="volume-o">
-        <van-swipe class="notice-swipe" horizontal :autoplay="3000" :show-indicators="false">
-            <van-swipe-item v-for="notice in noticeList" :key="notice.id">
-                {{ notice.title }}
+    <div class="home-page">
+        <!-- 搜索 -->
+        <van-search v-model="keyword" placeholder="请输入搜索关键词" shape="round" background="#fff" @click="goSearch" />
+        <van-swipe class="banner-swipe" :autoplay="3000" lazy-render indicator-color="#ee0a24">
+            <van-swipe-item v-for="banner in bannerList" :key="banner.imgUrl">
+                <img class="banner-image" :src="banner.imgUrl" alt="商城轮播图" />
             </van-swipe-item>
         </van-swipe>
-    </van-notice-bar>
-    <!-- 商品组 -->
-    <section v-for="group in productGroups" :key="group.id" class="product-group">
-        <header class="group-header">
-            <h2>{{ group.title }}</h2>
-            <span style="font-size: 16px;" @click="goCategory(group.title)">查看更多</span>
-        </header>
+        <van-grid class="nav-grid" :border="false" :column-num="4">
+            <van-grid-item v-for="item in navItems" :key="item.text" :icon="item.icon" :text="item.text" />
+        </van-grid>
+        <!-- 公告 -->
+        <van-notice-bar class="home-notice" left-icon="volume-o" color="#ed6a0c" background="#fffbe8">
+            <van-swipe class="notice-swipe" horizontal :autoplay="3000" :show-indicators="false">
+                <van-swipe-item v-for="notice in noticeList" :key="notice.id">
+                    {{ notice.title }}
+                </van-swipe-item>
+            </van-swipe>
+        </van-notice-bar>
+        <!-- 商品组 -->
+        <section v-for="group in productGroups" :key="group.id" class="product-group">
+            <header class="group-header">
+                <h2>{{ group.title }}</h2>
+                <span class="more-link" @click="goCategory(group.title)">查看更多</span>
+            </header>
 
-        <div class="product-grid">
-            <article v-for="product in group.productDtoList" :key="product.prodId" class="product-card"
-                @click="goDetail(product.prodId)">
-                <img class="product-image" :src="product.pic" :alt="product.prodName" />
+            <div class="product-grid">
+                <article v-for="product in group.productDtoList" :key="product.prodId" class="product-card"
+                    @click="goDetail(product.prodId)">
+                    <img class="product-image" :src="product.pic" :alt="product.prodName" />
 
-                <div class="product-name">
-                    {{ product.prodName }}
-                </div>
+                    <div class="product-name">
+                        {{ product.prodName }}
+                    </div>
 
-                <div class="product-price">
-                    ¥ {{ product.price }}
-                </div>
-            </article>
-        </div>
-    </section>
+                    <div class="product-price">
+                        <span class="price-symbol">¥</span>{{ product.price }}
+                    </div>
+                </article>
+            </div>
+        </section>
+    </div>
 </template>
 <style lang="scss" scoped>
+.home-page {
+    min-height: 100%;
+    background: var(--shop-bg);
+    padding-bottom: 16px;
+}
+
+.banner-swipe {
+    margin: 0 20px;
+    overflow: hidden;
+    border-radius: var(--shop-radius);
+}
+
 .banner-image {
     display: block;
     width: 100%;
-    height: 370px;
+    height: 320px;
+    object-fit: cover;
+}
+
+.nav-grid {
+    margin: 16px 20px 0;
+    border-radius: var(--shop-radius);
+    overflow: hidden;
+    background: var(--shop-card);
+
+    :deep(.van-grid-item__content) {
+        padding: 28px 8px;
+        background: transparent;
+    }
+
+    :deep(.van-grid-item__icon) {
+        font-size: 44px;
+        color: var(--shop-primary);
+    }
+
+    :deep(.van-grid-item__text) {
+        margin-top: 12px;
+        color: var(--shop-text);
+        font-size: 22px;
+    }
+}
+
+.home-notice {
+    margin: 16px 20px 0;
+    border-radius: var(--shop-radius-sm);
+    overflow: hidden;
 }
 
 .notice-swipe {
     height: 40px;
     width: 100%;
+    line-height: 40px;
 }
 
 .product-group {
-    padding: 20px;
+    margin: 20px 20px 0;
+    padding: 24px 20px 20px;
+    border-radius: var(--shop-radius);
+    background: var(--shop-card);
 }
 
 .group-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-bottom: 20px;
 
     h2 {
-        margin: 20px 0;
+        margin: 0;
         font-size: 32px;
+        font-weight: 700;
+        color: var(--shop-text);
     }
 
-    span {
-        color: #999;
+    .more-link {
+        color: var(--shop-text-secondary);
+        font-size: 24px;
     }
 }
 
 .product-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    gap: 16px;
+}
+
+.product-card {
+    min-width: 0;
 }
 
 .product-image {
@@ -146,13 +202,16 @@ const navItems = [
     width: 100%;
     aspect-ratio: 1;
     object-fit: cover;
+    border-radius: var(--shop-radius-sm);
+    background: #f2f3f5;
 }
 
 .product-name {
-    font-size: 28px;
-    margin-top: 10px;
-    overflow: hidden;
+    margin-top: 12px;
+    font-size: 24px;
     line-height: 1.4;
+    color: var(--shop-text);
+    overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
@@ -160,7 +219,14 @@ const navItems = [
 
 .product-price {
     margin-top: 8px;
-    color: #ee0a24;
-    font-size: 30px;
+    color: var(--shop-primary);
+    font-size: 28px;
+    font-weight: 700;
+
+    .price-symbol {
+        margin-right: 2px;
+        font-size: 22px;
+        font-weight: 600;
+    }
 }
 </style>

@@ -74,13 +74,14 @@ onMounted(() => {
 
         <template v-else-if="confirmData">
             <div v-if="defaultAddress" class="address-card">
-                <van-icon name="manager" />
-                <div>
-                    <div>姓名：{{ defaultAddress.receiver }} {{ defaultAddress.mobile }}</div>
-                    <div>地址：{{ defaultAddress.province }}{{ defaultAddress.city }}{{ defaultAddress.area }}{{ defaultAddress.addr }}</div>
+                <van-icon name="manager" class="address-icon" />
+                <div class="address-info">
+                    <div class="address-name">姓名：{{ defaultAddress.receiver }} {{ defaultAddress.mobile }}</div>
+                    <div class="address-detail">地址：{{ defaultAddress.province }}{{ defaultAddress.city }}{{ defaultAddress.area }}{{ defaultAddress.addr }}</div>
                 </div>
+                <van-icon name="arrow" class="address-arrow" />
             </div>
-            <van-cell v-else title="请先添加收货地址" is-link />
+            <van-cell v-else class="address-empty" title="请先添加收货地址" is-link />
 
             <section v-for="shop in confirmData.shopCartOrders" :key="shop.shopId" class="shop-order">
                 <h3>{{ shop.shopName }}</h3>
@@ -89,6 +90,7 @@ onMounted(() => {
                     <van-card
                         v-for="item in discount.shopCartItems"
                         :key="item.skuId"
+                        class="order-card"
                         :thumb="item.pic"
                         :title="item.prodName"
                         :desc="item.skuName"
@@ -106,7 +108,7 @@ onMounted(() => {
                 <van-cell title="总金额" :value="`¥${confirmData.total}`" />
                 <van-cell title="优惠金额" :value="`¥${confirmData.orderReduce}`" />
                 <van-cell title="商品总数" :value="confirmData.totalCount" />
-                <van-cell title="支付金额" :value="`¥${confirmData.actualTotal}`" />
+                <van-cell title="支付金额" class="pay-cell" :value="`¥${confirmData.actualTotal}`" />
             </div>
 
             <van-submit-bar
@@ -122,8 +124,8 @@ onMounted(() => {
 <style lang="scss" scoped>
 .order-confirm-page {
     min-height: 100vh;
-    padding-bottom: 100px;
-    background: #f5f5f5;
+    padding-bottom: 120px;
+    background: var(--shop-bg);
 }
 
 .page-loading {
@@ -132,22 +134,104 @@ onMounted(() => {
 
 .address-card {
     display: flex;
+    align-items: center;
     gap: 20px;
-    padding: 28px;
-    background: #fff;
+    margin: 16px 20px 0;
+    padding: 28px 24px;
+    border-radius: var(--shop-radius) var(--shop-radius) 0 0;
+    background: var(--shop-card);
     font-size: 24px;
     line-height: 1.6;
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 4px;
+        background: repeating-linear-gradient(
+            90deg,
+            #1989fa 0 12px,
+            transparent 12px 18px,
+            #ff976a 18px 30px,
+            transparent 30px 36px
+        );
+    }
+}
+
+.address-icon {
+    flex-shrink: 0;
+    font-size: 40px;
+    color: var(--shop-primary);
+}
+
+.address-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.address-name {
+    font-weight: 600;
+    font-size: 26px;
+}
+
+.address-detail {
+    margin-top: 8px;
+    color: var(--shop-text-secondary);
+}
+
+.address-arrow {
+    color: var(--shop-text-secondary);
+}
+
+.address-empty {
+    margin: 16px 20px 0;
+    border-radius: var(--shop-radius);
+    overflow: hidden;
 }
 
 .shop-order,
 .amount-list {
-    margin-top: 20px;
-    background: #fff;
+    margin: 16px 20px 0;
+    overflow: hidden;
+    border-radius: var(--shop-radius);
+    background: var(--shop-card);
 }
 
 .shop-order h3 {
     margin: 0;
-    padding: 24px 28px;
-    font-size: 28px;
+    padding: 24px 28px 12px;
+    font-size: 30px;
+    font-weight: 700;
+}
+
+.order-card {
+    background: transparent;
+
+    :deep(.van-card__thumb) {
+        border-radius: var(--shop-radius-sm);
+        overflow: hidden;
+    }
+
+    :deep(.van-card__price) {
+        color: var(--shop-text);
+        font-weight: 700;
+    }
+}
+
+.amount-list {
+    :deep(.van-cell) {
+        padding: 22px 28px;
+        color: var(--shop-text-secondary);
+    }
+
+    .pay-cell {
+        :deep(.van-cell__value) {
+            color: var(--shop-primary);
+            font-weight: 700;
+        }
+    }
 }
 </style>

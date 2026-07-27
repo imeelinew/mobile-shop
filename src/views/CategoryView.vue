@@ -67,29 +67,31 @@ onMounted(async () => {
 </script>
 <template>
     <div class="category-page">
-        <van-search placeholder="请输入搜索关键词"></van-search>
-        <div class="category-content"> <van-sidebar v-model="active" @change="handleChangeCategory">
+        <van-search placeholder="请输入搜索关键词" shape="round" background="#fff" />
+        <div class="category-content">
+            <van-sidebar v-model="active" class="category-sidebar" @change="handleChangeCategory">
                 <van-sidebar-item :title="item.text" v-for="item in categoryList" :key="item.categoryId" />
             </van-sidebar>
             <main class="product-panel">
                 <img v-if="categoryList[active]?.pic" class="category-banner" :src="categoryList[active].pic" alt="">
-                <van-card v-for="item in productList" :key="item.prodId" @click="goToDetail(item.prodId)"
-                    :title="item.prodName" :desc="item.brief" :price="item.price" :origin-price="item.oriPrice"
-                    :thumb="item.pic">
-                    <template #tags>
-                        <span>库存 x{{ item.totalStocks }}</span>
-                    </template>
-                </van-card>
+                <div class="product-list">
+                    <van-card v-for="item in productList" :key="item.prodId" class="product-card"
+                        @click="goToDetail(item.prodId)" :title="item.prodName" :desc="item.brief" :price="item.price"
+                        :origin-price="item.oriPrice" :thumb="item.pic">
+                        <template #tags>
+                            <span class="stock-tag">库存 x{{ item.totalStocks }}</span>
+                        </template>
+                    </van-card>
+                </div>
                 <van-empty v-if="!productList.length" description="该分类暂无商品" />
             </main>
         </div>
     </div>
-
 </template>
 <style lang="scss" scoped>
 .category-page {
     height: 100vh;
-    background: #f7f8fa;
+    background: var(--shop-bg);
 }
 
 .category-content {
@@ -98,16 +100,81 @@ onMounted(async () => {
     overflow: hidden;
 }
 
+.category-sidebar {
+    flex-shrink: 0;
+    width: 180px;
+
+    :deep(.van-sidebar-item) {
+        padding: 28px 16px;
+        font-size: 26px;
+        color: var(--shop-text-secondary);
+        background: #f2f3f5;
+    }
+
+    :deep(.van-sidebar-item--select) {
+        color: var(--shop-text);
+        font-weight: 600;
+        background: var(--shop-card);
+
+        &::before {
+            background: var(--shop-primary);
+            width: 6px;
+            height: 36px;
+            border-radius: 0 4px 4px 0;
+        }
+    }
+}
+
 .product-panel {
     flex: 1;
     min-width: 0;
     overflow-y: auto;
+    background: var(--shop-card);
 }
 
 .category-banner {
     display: block;
-    width: 100%;
-    height: 120px;
+    width: calc(100% - 24px);
+    height: 140px;
+    margin: 16px 12px 8px;
     object-fit: cover;
+    border-radius: var(--shop-radius-sm);
+}
+
+.product-list {
+    padding: 0 8px 24px;
+}
+
+.product-card {
+    margin: 0;
+    background: transparent;
+
+    :deep(.van-card__thumb) {
+        width: 160px;
+        height: 160px;
+        border-radius: var(--shop-radius-sm);
+        overflow: hidden;
+    }
+
+    :deep(.van-card__title) {
+        font-size: 26px;
+        font-weight: 600;
+        line-height: 1.4;
+    }
+
+    :deep(.van-card__desc) {
+        margin-top: 8px;
+        color: var(--shop-text-secondary);
+    }
+
+    :deep(.van-card__price) {
+        color: var(--shop-primary);
+        font-weight: 700;
+    }
+}
+
+.stock-tag {
+    color: var(--shop-text-secondary);
+    font-size: 22px;
 }
 </style>

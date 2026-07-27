@@ -174,17 +174,16 @@ onMounted(() => {
         <span>¥</span>
         {{ product.price }}
       </p>
-
     </div>
     <van-empty v-else description="暂无数据" />
+
     <div v-if="aiLoading" class="ai-loading">
-      🤖 AI 正在分析商品卖点...
+      AI 正在分析商品卖点...
     </div>
     <div v-else-if="aiSellingPoints.length" class="ai-selling-points">
       <div class="ai-selling-title">
-        <strong>🤖 AI智能卖点</strong>
+        <strong>AI智能卖点</strong>
         <van-tag plain :type="aiSource === 'openai' ? 'primary' : 'success'">
-          <!-- {{ aiSource === 'openai' ? 'DeepSeek AI' : '本地' }} -->
           <span v-if="aiSource === 'openai'">DeepSeek AI</span>
           <span v-else-if="aiSellingPoints.length > 3">智能推荐卖点</span>
           <span v-else>本地</span>
@@ -194,34 +193,37 @@ onMounted(() => {
         <span class="ai-selling-point-text">{{ point }}</span>
       </div>
     </div>
-    <van-divider />
-    <!-- 下方暂未完成 -->
+
     <div class="selected-row" @click="handleShowActionPanel">
-      <span>已选</span>
-      <span>{{ selectedSku?.skuName }}</span>
+      <span class="row-label">已选</span>
+      <span class="row-value">{{ selectedSku?.skuName }}</span>
+      <van-icon name="arrow" />
     </div>
 
-    <van-action-sheet v-model:show="isShowActionPanel" title="选择产品列表">
+    <van-action-sheet v-model:show="isShowActionPanel" title="选择产品列表" round>
       <ActionPanel :sku-list="skuList" :selected-sku="selectedSku" @confirm="handleSkuConfirm" />
     </van-action-sheet>
 
+    <div v-if="commentData" class="comment-block">
+      <div class="comment-summary">
+        <span class="rating">好评{{ commentData.positiveRating }}%</span>
+        <span class="count">共{{ commentData.number }}条</span>
+      </div>
+      <div class="comment-tabs">
+        <van-tag plain type="danger">全部{{ commentData.number }}</van-tag>
+        <van-tag plain>好评{{ commentData.praiseNumber }}</van-tag>
+        <van-tag plain>中评{{ commentData.secondaryNumber }}</van-tag>
+        <van-tag plain>差评{{ commentData.negativeNumber }}</van-tag>
+        <van-tag plain>有图{{ commentData.picNumber }}</van-tag>
+      </div>
+    </div>
 
-    <van-divider />
-    <div v-if="commentData" class="comment-summary">
-      <span>好评{{ commentData.positiveRating }}%</span>
-      <span style="color: gray;">共{{ commentData.number }}条</span>
-    </div>
-    <div v-if="commentData" class="comment-tabs">
-      <van-tag>全部{{ commentData.number }}</van-tag>
-      <van-tag>好评{{ commentData.praiseNumber }}</van-tag>
-      <van-tag>中评{{ commentData.secondaryNumber }}</van-tag>
-      <van-tag>差评{{ commentData.negativeNumber }}</van-tag>
-      <van-tag>有图{{ commentData.picNumber }}</van-tag>
-    </div>
     <div v-if="product?.content" class="product-content" v-html="product.content"></div>
   </div>
-  <van-action-sheet v-model:show="isShowBuyPanel" title="确认商品">
+
+  <van-action-sheet v-model:show="isShowBuyPanel" title="确认商品" round class="buy-sheet">
     <van-card
+      class="buy-card"
       :thumb="selectedSku?.pic"
       :title="selectedSku?.skuName"
       :desc="product?.brief"
@@ -234,12 +236,13 @@ onMounted(() => {
     </div>
     <ActionPanel :sku-list="skuList" :selected-sku="selectedSku" @confirm="handleSkuConfirm" />
     <div class="buy-actions">
-      <van-button block type="warning" @click="handleAddCart">加入购物车</van-button>
+      <van-button block type="default" class="cart-btn" @click="handleAddCart">加入购物车</van-button>
       <van-button block type="danger" @click="handleBuyNow">立即购买</van-button>
     </div>
   </van-action-sheet>
+
   <!-- 底部操作栏 -->
-  <van-action-bar>
+  <van-action-bar safe-area-inset-bottom>
     <van-action-bar-icon icon="cart-o" text="购物车" />
     <van-action-bar-icon icon="shop-o" text="店铺" />
     <van-action-bar-button type="warning" text="加入购物车" @click="handleShowBuyPanel" />
@@ -249,25 +252,31 @@ onMounted(() => {
 <style lang="scss" scoped>
 .product-detail-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  padding-bottom: 120px;
+  background: var(--shop-bg);
 
-  .detail-content {
-    background: #fff;
+  .loading-box {
+    padding-top: 200px;
   }
 
-  .product-image {
-    height: 680px;
-    padding: 32px;
-    box-sizing: border-box;
-    border-bottom: 1px solid #e5e5e5;
+  .detail-content {
+    background: var(--shop-card);
+  }
+
+  .my-swipe {
+    background: #fff;
+
+    :deep(.van-swipe-item) {
+      height: 680px;
+    }
   }
 
   .product-info {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 30px;
-    padding: 38px 32px 0;
+    gap: 24px;
+    padding: 32px 28px 0;
 
     .info-left {
       flex: 1;
@@ -275,14 +284,16 @@ onMounted(() => {
 
       .product-title {
         margin: 0;
-        font-size: 30px;
-        font-weight: 500;
+        font-size: 32px;
+        font-weight: 600;
+        line-height: 1.4;
       }
 
       .product-brief {
-        margin: 48px 0 0;
-        color: #666;
-        font-size: 20px;
+        margin: 16px 0 0;
+        color: var(--shop-text-secondary);
+        font-size: 24px;
+        line-height: 1.5;
       }
     }
 
@@ -291,7 +302,9 @@ onMounted(() => {
       align-items: center;
       flex-shrink: 0;
       gap: 8px;
-      font-size: 28px;
+      padding-top: 4px;
+      color: var(--shop-text-secondary);
+      font-size: 24px;
 
       .van-icon {
         font-size: 36px;
@@ -300,93 +313,121 @@ onMounted(() => {
   }
 
   .product-price {
-    margin: 70px 0 0;
-    padding: 0 32px 70px;
-    color: #ee0a24;
+    margin: 28px 0 0;
+    padding: 0 28px 32px;
+    color: var(--shop-primary);
     font-size: 48px;
+    font-weight: 700;
 
     span {
-      font-size: 32px;
+      margin-right: 4px;
+      font-size: 28px;
+      font-weight: 600;
     }
   }
 
-  .ai-selling-points {
-    margin: 24px 28px;
+  .ai-selling-points,
+  .ai-loading {
+    margin: 16px 20px;
     padding: 28px;
-    border-radius: 14px;
-    background: #f4f3ff;
-
-    .ai-selling-title {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      margin-bottom: 24px;
-
-      strong {
-        font-size: 34px;
-      }
-    }
-
-    .ai-selling-point {
-      padding: 20px 24px;
-      border-left: 6px solid #1989fa;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.82);
-      color: #323233;
-      font-size: 24px;
-      line-height: 1.5;
-
-      &+.ai-selling-point {
-        margin-top: 14px;
-      }
-    }
+    border-radius: var(--shop-radius);
+    background: var(--shop-primary-soft);
   }
 
   .ai-loading {
-    margin: 24px 28px;
-    padding: 28px;
-    border-radius: 14px;
-    background: #f4f3ff;
+    color: var(--shop-text-secondary);
     font-size: 24px;
     text-align: center;
+  }
+
+  .ai-selling-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+
+    strong {
+      font-size: 30px;
+    }
+  }
+
+  .ai-selling-point {
+    padding: 18px 22px;
+    border-left: 6px solid var(--shop-primary);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--shop-text);
+    font-size: 24px;
+    line-height: 1.5;
+
+    & + .ai-selling-point {
+      margin-top: 12px;
+    }
   }
 
   .selected-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 24px 28px;
-    background: #fff;
-    font-size: 24px;
-    text-align: center;
+    gap: 16px;
+    margin-top: 16px;
+    padding: 28px;
+    background: var(--shop-card);
+    font-size: 26px;
+
+    .row-label {
+      color: var(--shop-text-secondary);
+      flex-shrink: 0;
+    }
+
+    .row-value {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .van-icon {
+      color: var(--shop-text-secondary);
+    }
+  }
+
+  .comment-block {
+    margin-top: 16px;
+    background: var(--shop-card);
   }
 
   .comment-summary {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 24px 28px;
-    background: #fff;
-    font-size: 24px;
-    text-align: center;
+    padding: 28px;
+    font-size: 26px;
+
+    .rating {
+      font-weight: 600;
+    }
+
+    .count {
+      color: var(--shop-text-secondary);
+    }
   }
 
   .comment-tabs {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 24px 28px;
-    background: #fff;
-    font-size: 24px;
-    text-align: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 0 28px 28px;
   }
 
   .product-content {
     width: 100%;
     max-width: 100vw;
+    margin-top: 16px;
     overflow: hidden;
     box-sizing: border-box;
-    background: #fff;
+    background: var(--shop-card);
 
     :deep(img) {
       display: block;
@@ -395,25 +436,35 @@ onMounted(() => {
       height: auto !important;
     }
   }
+}
 
-  .action-sheet-content {
-    padding: 24px 28px;
-    background: #fff;
-    font-size: 24px;
-    text-align: center;
+.buy-card {
+  margin: 8px 20px 0;
+
+  :deep(.van-card__price) {
+    color: var(--shop-primary);
+    font-weight: 700;
   }
+}
 
-  .quantity-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 24px 28px;
-    background: #fff;
-  }
+.quantity-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 28px;
+  font-size: 26px;
+}
 
-  .buy-actions {
-    display: flex;
-    padding: 24px 28px;
-    background: #fff;
+.buy-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 16px 28px 36px;
+
+  .cart-btn {
+    background: #4a4a4a;
+    border-color: #4a4a4a;
+    color: #fff;
   }
 }
 </style>

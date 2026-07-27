@@ -11,6 +11,8 @@ import { RouterView } from 'vue-router'
 </template>
 <style lang="scss" scoped>
 .layout-content {
+    min-height: 100vh;
     padding-bottom: 100px;
+    background: var(--shop-bg);
 }
 </style>

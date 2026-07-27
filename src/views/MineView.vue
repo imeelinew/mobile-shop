@@ -24,23 +24,25 @@ const logout = () => {
                 src="https://img.yzcdn.cn/vant/cat.jpeg"></van-image>
             <div class="username">张三</div>
         </div>
-        <van-divider class="section-divider" />
-        <div class="orders">
-            <div class="orders-left">
-                <span>我的订单</span>
+
+        <div class="orders-card">
+            <div class="orders">
+                <div class="orders-left">
+                    <span>我的订单</span>
+                </div>
+                <div class="orders-right">
+                    <span>查看全部</span>
+                    <van-icon name="arrow" />
+                </div>
             </div>
-            <div class="orders-right">
-                <span>查看全部</span>
+            <div class="info">
+                <van-grid :border="false" :column-num="4">
+                    <van-grid-item icon="balance-pay" text="待支付" :badge="orderCount.unPay" />
+                    <van-grid-item icon="logistics" text="待发货" :badge="orderCount.payed" />
+                    <van-grid-item icon="description" text="待签收" :badge="orderCount.consignment" />
+                    <van-grid-item icon="passed" text="已完成" :badge="orderCount.success" />
+                </van-grid>
             </div>
-        </div>
-        <van-divider class="section-divider" />
-        <div class="info">
-            <van-grid :border="false">
-                <van-grid-item icon="balance-pay" text="待支付" :badge="orderCount.unPay" />
-                <van-grid-item icon="logistics" text="待发货" :badge="orderCount.payed" />
-                <van-grid-item icon="description" text="待签收" :badge="orderCount.consignment" />
-                <van-grid-item icon="passed" text="已完成" :badge="orderCount.success" />
-            </van-grid>
         </div>
 
         <van-grid :column-num="3" :border="false" class="stats">
@@ -65,7 +67,7 @@ const logout = () => {
         </van-grid>
 
         <div class="settings">
-            <van-cell-group>
+            <van-cell-group inset>
                 <van-cell title="分销中心" icon="cart-o" is-link />
                 <van-cell title="领券中心" icon="coupon-o" is-link />
                 <van-cell title="我的优惠券" icon="bookmark-o" is-link />
@@ -75,75 +77,106 @@ const logout = () => {
         </div>
 
         <div class="logout">
-            <van-button type="danger" @click="logout">退出登录</van-button>
+            <van-button round block type="danger" @click="logout">退出登录</van-button>
         </div>
     </div>
 </template>
 <style lang="scss" scoped>
 .mine-page {
     min-height: 100vh;
-    background: #f5f5f5;
-
-    .section-divider {
-        margin: 0;
-    }
+    padding-bottom: 32px;
+    background: var(--shop-bg);
 
     .profile {
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 40px;
-        background: #fff;
+        padding: 56px 40px 40px;
+        background: linear-gradient(180deg, #fff1f0 0%, #ffffff 100%);
 
         .username {
-            font-size: 32px;
             margin-top: 20px;
+            font-size: 34px;
+            font-weight: 700;
         }
+    }
+
+    .orders-card {
+        margin: 16px 20px 0;
+        overflow: hidden;
+        border-radius: var(--shop-radius);
+        background: var(--shop-card);
     }
 
     .orders {
         display: flex;
         justify-content: space-between;
-        flex-direction: row;
         align-items: center;
-        padding: 24px 32px;
-        background: #fff;
+        padding: 28px 28px 12px;
 
         .orders-left {
-            font-size: 32px;
-            font-weight: bold;
+            font-size: 30px;
+            font-weight: 700;
         }
 
         .orders-right {
-            font-size: 28px;
-            color: #999;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 24px;
+            color: var(--shop-text-secondary);
+        }
+    }
+
+    .info {
+        :deep(.van-grid-item__icon) {
+            font-size: 44px;
+            color: var(--shop-primary);
+        }
+
+        :deep(.van-grid-item__text) {
+            font-size: 22px;
         }
     }
 
     .stats {
-        margin-top: 24px;
+        margin: 16px 20px 0;
+        overflow: hidden;
+        border-radius: var(--shop-radius);
+        background: var(--shop-card);
     }
 
     .stat-item {
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 12px;
         align-items: center;
-        font-size: 28px;
+        font-size: 24px;
+        color: var(--shop-text-secondary);
 
         strong {
-            font-size: 32px;
-            font-weight: 400;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--shop-text);
         }
     }
 
     .settings {
-        margin-top: 24px;
+        margin-top: 16px;
+
+        :deep(.van-cell-group--inset) {
+            margin: 0 20px;
+            border-radius: var(--shop-radius);
+            overflow: hidden;
+        }
+
+        :deep(.van-cell__left-icon) {
+            color: var(--shop-primary);
+        }
     }
 
     .logout {
-        padding: 32px 0;
-        text-align: center;
+        padding: 40px 40px 0;
     }
 }
 </style>

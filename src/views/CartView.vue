@@ -113,7 +113,7 @@ onMounted(() => {
     <div class="cart-page">
         <van-nav-bar title="购物车" />
 
-        <van-cell v-if="defaultAddress" icon="location-o" is-link>
+        <van-cell v-if="defaultAddress" class="address-cell" icon="location-o" is-link>
             <template #title>
                 {{ defaultAddress.province }}{{ defaultAddress.city }}{{ defaultAddress.area }}{{ defaultAddress.addr }}
             </template>
@@ -132,7 +132,8 @@ onMounted(() => {
                     <div v-for="item in discount.shopCartItems" :key="item.basketId" class="cart-item">
                         <van-checkbox v-model="item.checked" checked-color="#ee0a24" />
                         <van-swipe-cell>
-                            <van-card :thumb="item.pic" :title="item.prodName" :desc="item.skuName" :price="item.price">
+                            <van-card class="cart-card" :thumb="item.pic" :title="item.prodName" :desc="item.skuName"
+                                :price="item.price">
                                 <template #num>
                                     <van-stepper :model-value="item.prodCount"
                                         @change="onStepperChange(item, $event)" />
@@ -164,7 +165,15 @@ onMounted(() => {
 .cart-page {
     min-height: 100vh;
     padding-bottom: 100px;
-    background: #f5f5f5;
+    background: var(--shop-bg);
+}
+
+.address-cell {
+    margin-bottom: 16px;
+
+    :deep(.van-cell__left-icon) {
+        color: var(--shop-primary);
+    }
 }
 
 .cart-loading {
@@ -172,24 +181,52 @@ onMounted(() => {
 }
 
 .cart-shop {
-    margin-top: 20px;
-    background: #fff;
+    margin: 0 20px 16px;
+    overflow: hidden;
+    border-radius: var(--shop-radius);
+    background: var(--shop-card);
 }
 
 .shop-title {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 20px 28px;
+    padding: 24px 24px 12px;
+
+    strong {
+        font-size: 28px;
+        font-weight: 700;
+    }
 }
 
 .cart-item {
     display: flex;
     align-items: center;
-    padding-left: 28px;
+    padding: 0 12px 12px 20px;
 
     .van-swipe-cell {
         flex: 1;
+        min-width: 0;
+    }
+}
+
+.cart-card {
+    background: transparent;
+
+    :deep(.van-card__thumb) {
+        width: 160px;
+        height: 160px;
+        border-radius: var(--shop-radius-sm);
+        overflow: hidden;
+    }
+
+    :deep(.van-card__title) {
+        font-weight: 600;
+    }
+
+    :deep(.van-card__price) {
+        color: var(--shop-primary);
+        font-weight: 700;
     }
 }
 
@@ -197,9 +234,9 @@ onMounted(() => {
     bottom: 100px;
 
     .clear-button {
-        color: #ee0a24;
-        font-size: 20px;
-        margin-left: 10px;
+        margin-left: 16px;
+        color: var(--shop-primary);
+        font-size: 24px;
     }
 }
 
