@@ -39,6 +39,13 @@ export const post = (
     return request.post(url, data, config)
 }
 
+export const put = (
+    url: string,
+    data?: any
+): Promise<any> => {
+    return request.put(url, data)
+}
+
 export const del = (
     url: string,
     data?: any

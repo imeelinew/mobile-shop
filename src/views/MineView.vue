@@ -72,7 +72,7 @@ const logout = () => {
                 <van-cell title="领券中心" icon="coupon-o" is-link />
                 <van-cell title="我的优惠券" icon="bookmark-o" is-link />
                 <van-cell title="智能客服" icon="service-o" is-link />
-                <van-cell title="收货地址" icon="location-o" is-link />
+                <van-cell title="收货地址" icon="location-o" is-link @click="router.push('/address')" />
             </van-cell-group>
         </div>
 

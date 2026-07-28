@@ -73,7 +73,7 @@ onMounted(() => {
         <van-loading v-if="loading" class="page-loading" vertical>加载中...</van-loading>
 
         <template v-else-if="confirmData">
-            <div v-if="defaultAddress" class="address-card">
+            <div v-if="defaultAddress" class="address-card" @click="router.push('/address')">
                 <van-icon name="manager" class="address-icon" />
                 <div class="address-info">
                     <div class="address-name">姓名：{{ defaultAddress.receiver }} {{ defaultAddress.mobile }}</div>
@@ -81,7 +81,7 @@ onMounted(() => {
                 </div>
                 <van-icon name="arrow" class="address-arrow" />
             </div>
-            <van-cell v-else class="address-empty" title="请先添加收货地址" is-link />
+            <van-cell v-else class="address-empty" title="请先添加收货地址" is-link @click="router.push('/address')" />
 
             <section v-for="shop in confirmData.shopCartOrders" :key="shop.shopId" class="shop-order">
                 <h3>{{ shop.shopName }}</h3>
@@ -143,6 +143,7 @@ onMounted(() => {
     font-size: 24px;
     line-height: 1.6;
     position: relative;
+    cursor: pointer;
 
     &::after {
         content: '';
