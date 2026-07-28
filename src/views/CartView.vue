@@ -129,7 +129,7 @@ onMounted(() => {
     <div class="cart-page">
         <van-nav-bar title="购物车" />
 
-        <van-cell v-if="defaultAddress" class="address-cell" icon="location-o" is-link>
+        <van-cell v-if="defaultAddress" class="address-cell" icon="location-o" is-link @click="router.push('/address')">
             <template #title>
                 {{ defaultAddress.province }}{{ defaultAddress.city }}{{ defaultAddress.area }}{{ defaultAddress.addr }}
             </template>

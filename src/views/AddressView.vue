@@ -22,6 +22,8 @@ const areaOptions = ref<any[]>([])
 const areaCascaderValue = ref<number>()
 const areaLoading = ref(false)
 
+//管理模式
+const manageMode = ref(false)
 const openAreaCascader = async () => {
     try {
         const res = await getAreaList(0)
@@ -44,6 +46,8 @@ const provinceName = ref('')
 const cityName = ref('')
 const areaName = ref('')
 
+
+const chosenAddressId = ref<number>()
 //用户选中一层后，问后端要下一层数据，挂到这一层的children上
 const onCascaderChange = async ({ selectedOptions }: any) => {
     const current = selectedOptions[selectedOptions.length - 1]
@@ -103,21 +107,36 @@ const handleAddAddress = async () => {
         showFailToast('新增地址失败')
     }
 }
+
+//转换
+function formatAddressList(list: any[]) {
+    return list.map((item) => ({
+        ...item,
+        id: item.addrId,
+        name: item.receiver,
+        tel: item.mobile,
+        address: item.province + item.city + item.area + item.addr,
+        isDefault: item.commonAddr === 1,
+    }))
+}
 onMounted(async () => {
     const res = await getAddressList()
     addressList.value = res.data || []
+    addressList.value = formatAddressList(addressList.value)
 })
 </script>
 <template>
     <div class="address-view">
         <div v-if="mode === 'list'">
             <van-nav-bar title="地址管理" left-text="返回" right-text="管理" left-arrow @click-left="mode = 'list'"
-                @click-right="" />
-            <div v-for="item in addressList" :key="item.addrId">
-                <p>{{ item.receiver }} {{ item.mobile }}</p>
-                <p>{{ item.province }}{{ item.city }}{{ item.area }}{{ item.addr }}</p>
-                <span v-if="item.commonAddr === 1">默认</span>
-            </div>
+                @click-right="manageMode = !manageMode" />
+            <van-address-list v-model="chosenAddressId" :list="addressList" @add="mode = 'add'">
+                <template #item-bottom="{ item }" v-if="manageMode">
+                    <van-radio :name="item.id" v-model="item.isDefault">设为默认</van-radio>
+                    <van-button size="mini" @click="handleDelete(item)">删除</van-button>
+                    <p>管理模式</p>
+                </template>
+            </van-address-list>
             <van-action-bar>
                 <van-action-bar-button type="danger" text="新增地址" @click="mode = 'add'" />
             </van-action-bar>
