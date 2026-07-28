@@ -19,15 +19,22 @@ const addr = ref('');
 //级联选择器
 const showAreaCascader = ref(false)
 const areaOptions = ref<any[]>([])
+const areaCascaderValue = ref<number>()
+const areaLoading = ref(false)
 
 const openAreaCascader = async () => {
-    const res = await getAreaList(0)
-    areaOptions.value = res.data.map((item: any) => ({
-        text: item.areaName,
-        value: item.areaId,
-        children: [], // 有children字段(哪怕是空的)，告诉组件"后面还有下一层，先别结束选择"
-    }))
-    showAreaCascader.value = true
+    try {
+        const res = await getAreaList(0)
+        areaOptions.value = res.data.map((item: any) => ({
+            text: item.areaName,
+            value: item.areaId,
+            children: [], // 有children字段(哪怕是空的)，告诉组件"后面还有下一层，先别结束选择"
+        }))
+        showAreaCascader.value = true
+    } catch (error) {
+        console.log(error, 'error获取省份列表')
+        showFailToast('地区加载失败，请重试')
+    }
 }
 const areaText = ref('')
 const provinceId = ref<number>()
@@ -40,13 +47,21 @@ const areaName = ref('')
 //用户选中一层后，问后端要下一层数据，挂到这一层的children上
 const onCascaderChange = async ({ selectedOptions }: any) => {
     const current = selectedOptions[selectedOptions.length - 1]
-    const res = await getAreaList(current.value)
-    const isLastLevel = selectedOptions.length === 2 // 选完市，取的是区，区是最后一层，不能带children
-    current.children = res.data.map((item: any) =>
-        isLastLevel
-            ? { text: item.areaName, value: item.areaId }
-            : { text: item.areaName, value: item.areaId, children: [] }
-    )
+    areaLoading.value = true
+    try {
+        const res = await getAreaList(current.value)
+        const isLastLevel = selectedOptions.length === 2 // 选完市，取的是区，区是最后一层，不能带children
+        current.children = res.data.map((item: any) =>
+            isLastLevel
+                ? { text: item.areaName, value: item.areaId }
+                : { text: item.areaName, value: item.areaId, children: [] }
+        )
+    } catch (error) {
+        console.log(error, 'error获取下级地区')
+        showFailToast('地区加载失败，请重试')
+    } finally {
+        areaLoading.value = false
+    }
 }
 
 //省市区三层全部选完，触发这个
@@ -112,8 +127,12 @@ onMounted(async () => {
             <van-field v-model="receiver" label="收件人" placeholder="请输入收件人姓名" />
             <van-field v-model="areaText" label="地区" placeholder="请选择地区" readonly is-link @click="openAreaCascader" />
             <van-popup v-model:show="showAreaCascader" position="bottom" round>
-                <van-cascader title="请选择地区" :options="areaOptions" @change="onCascaderChange"
-                    @finish="onCascaderFinish" @close="showAreaCascader = false" />
+                <van-cascader v-model="areaCascaderValue" title="请选择地区" :options="areaOptions"
+                    @change="onCascaderChange" @finish="onCascaderFinish" @close="showAreaCascader = false">
+                    <template #options-top>
+                        <van-loading v-if="areaLoading" class="area-loading" size="24px">加载中...</van-loading>
+                    </template>
+                </van-cascader>
             </van-popup>
             <van-field v-model="mobile" label="手机号" placeholder="请输入手机号" />
             <van-field v-model="addr" label="详细地址" placeholder="请输入详细地址" />
@@ -125,4 +144,9 @@ onMounted(async () => {
     </div>
 
 </template>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.area-loading {
+    justify-content: center;
+    padding: 24px 0;
+}
+</style>
