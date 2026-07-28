@@ -3,6 +3,9 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { getCartInfo, getCartTotal, deleteCartItem, addCart } from '@/api/cart'
 import { getAddressList } from '@/api/order'
 import { showSuccessToast, showFailToast } from 'vant'
+import 'vant/es/toast/style'
+import { useRouter } from 'vue-router'
+const router = useRouter()
 const loading = ref(true)
 const cartList = ref<any[]>([])
 const defaultAddress = ref<any>(null)
@@ -104,6 +107,19 @@ const onStepperChange = (item: any, newCount: number) => {
     const delta = newCount - item.prodCount
     changeCartItemCount(item, delta)
 }
+//提交订单
+const handleCheckout = () => {
+    if (selectedBasketIds.value.length === 0) {
+        showFailToast('请选择商品')
+        return
+    }
+    const orderParams = {
+        basketIds: selectedBasketIds.value,
+        addrId: defaultAddress.value?.addrId ?? 0,
+    }
+    sessionStorage.setItem('confirmOrder', JSON.stringify(orderParams))
+    router.push('/order-confirm')
+}
 onMounted(() => {
     loadCart()
 })
@@ -151,7 +167,7 @@ onMounted(() => {
 
         <van-empty v-else description="购物车还是空的" />
 
-        <van-submit-bar class="cart-submit-bar" :price="totalPrice * 100" button-text="提交订单">
+        <van-submit-bar class="cart-submit-bar" :price="totalPrice * 100" button-text="提交订单" @submit="handleCheckout">
             <van-checkbox :model-value="allChecked" checked-color="#ee0a24"
                 @update:model-value="toggleAllChecked">全选</van-checkbox>
             <div class="clear-button" v-if="allChecked" @click="handleDeleteCartItem(selectedBasketIds)">

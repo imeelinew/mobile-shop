@@ -25,6 +25,11 @@ const router = createRouter({
       component: () => import('../views/ProductDetailView.vue'),
     },
     {
+      path: '/address',
+      name: 'address',
+      component: () => import('../views/AddressView.vue'),
+    },
+    {
       path: '/order-confirm',
       name: 'order-confirm',
       component: () => import('../views/OrderConfirmView.vue'),
