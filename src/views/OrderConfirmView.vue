@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { confirmOrder, getAddressList, submitOrder } from '@/api/order'
-import { showFailToast, showSuccessToast } from 'vant'
+import { confirmOrder, getAddressList, payOrder, submitOrder } from '@/api/order'
+import { showConfirmDialog, showFailToast, showSuccessToast, showToast } from 'vant'
+import 'vant/es/dialog/style'
 import 'vant/es/toast/style'
 
 const router = useRouter()
@@ -49,15 +50,50 @@ const handleSubmitOrder = async () => {
     if (!confirmData.value) return
 
     try {
-        const orderShopParam = confirmData.value.shopCartOrders.map((shop: any) => ({
+        const orderShopParams = confirmData.value.shopCartOrders.map((shop: any) => ({
             shopId: shop.shopId,
             remarks: shop.remarks || '',
         }))
-        const res = await submitOrder({ orderShopParam })
+        const res = await submitOrder({ orderShopParams })
 
         if (res.success) {
-            showSuccessToast('订单提交成功')
+            const orderNumbers = res.data?.orderNumbers || res.data?.orderNumber
+
+            if (!orderNumbers) {
+                showFailToast('订单提交成功，但未获取到支付流水号')
+                return
+            }
+
             sessionStorage.removeItem('confirmOrder')
+
+            try {
+                await showConfirmDialog({
+                    title: '确认支付',
+                    message: '确认支付该订单吗？',
+                })
+            } catch (error) {
+                showToast('当前订单已到待支付，请及时处理')
+                router.replace('/mine')
+                return
+            }
+
+            let payRes
+            try {
+                payRes = await payOrder({
+                    orderNumbers: String(orderNumbers),
+                    payType: 1,
+                })
+            } catch (error) {
+                showFailToast('支付失败，请稍后重试')
+                return
+            }
+
+            if (!payRes.success) {
+                showFailToast(payRes.msg || '支付失败，请稍后重试')
+                return
+            }
+
+            showSuccessToast('当前订单支付成功')
             router.replace('/mine')
         } else {
             showFailToast(res.msg || '订单提交失败')

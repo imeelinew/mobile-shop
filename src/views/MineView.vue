@@ -16,6 +16,13 @@ const logout = () => {
     removeToken()
     router.replace('/login')
 }
+
+const openOrders = (active = 0) => {
+    router.push({
+        path: '/my-order',
+        query: { active: String(active) },
+    })
+}
 </script>
 <template>
     <div class="mine-page">
@@ -26,7 +33,7 @@ const logout = () => {
         </div>
 
         <div class="orders-card">
-            <div class="orders">
+            <div class="orders" @click="openOrders()">
                 <div class="orders-left">
                     <span>我的订单</span>
                 </div>
@@ -37,10 +44,10 @@ const logout = () => {
             </div>
             <div class="info">
                 <van-grid :border="false" :column-num="4">
-                    <van-grid-item icon="balance-pay" text="待支付" :badge="orderCount.unPay" />
-                    <van-grid-item icon="logistics" text="待发货" :badge="orderCount.payed" />
-                    <van-grid-item icon="description" text="待签收" :badge="orderCount.consignment" />
-                    <van-grid-item icon="passed" text="已完成" :badge="orderCount.success" />
+                    <van-grid-item icon="balance-pay" text="待支付" :badge="orderCount.unPay" @click="openOrders(0)" />
+                    <van-grid-item icon="logistics" text="待发货" :badge="orderCount.payed" @click="openOrders(1)" />
+                    <van-grid-item icon="description" text="待签收" :badge="orderCount.consignment" @click="openOrders(2)" />
+                    <van-grid-item icon="passed" text="已完成" :badge="orderCount.success" @click="openOrders(3)" />
                 </van-grid>
             </div>
         </div>

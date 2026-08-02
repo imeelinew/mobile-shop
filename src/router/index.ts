@@ -35,6 +35,11 @@ const router = createRouter({
       component: () => import('../views/OrderConfirmView.vue'),
     },
     {
+      path: '/my-order',
+      name: 'my-order',
+      component: () => import('../views/MyOrderView.vue'),
+    },
+    {
       path: '/',
       component: () => import('../components/Layout.vue'),
       redirect: '/home',
