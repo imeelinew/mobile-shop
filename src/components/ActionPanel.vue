@@ -61,6 +61,7 @@ watch(
 )
 const selectProperty = (name: string, value: string) => {
     selectedProps.value[name] = value
+    confirmSelection()
 }
 const emit = defineEmits(['confirm'])
 

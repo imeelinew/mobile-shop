@@ -21,16 +21,22 @@ const loadOrder = async () => {
 
     try {
         const orderParams = JSON.parse(raw)
-        const [addressRes, orderRes] = await Promise.all([
-            getAddressList(),
-            confirmOrder(orderParams),
-        ])
-
+        const addressRes = await getAddressList()
         const addressList = addressRes.data || []
-        defaultAddress.value = addressList.find((item: any) => item.commonAddr === 1)
+        defaultAddress.value = addressList.find((item: any) => Number(item.commonAddr) === 1)
             || addressList[0]
-            || orderRes.data?.userAddr
             || null
+
+        // 换地址后用最新默认地址重新确认订单
+        if (defaultAddress.value?.addrId) {
+            orderParams.addrId = defaultAddress.value.addrId
+            sessionStorage.setItem('confirmOrder', JSON.stringify(orderParams))
+        }
+
+        const orderRes = await confirmOrder(orderParams)
+        if (!defaultAddress.value) {
+            defaultAddress.value = orderRes.data?.userAddr || null
+        }
         confirmData.value = orderRes.data
     } catch (error) {
         showFailToast('订单信息加载失败')

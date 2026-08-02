@@ -75,7 +75,7 @@ const loadCart = async () => {
         })
         console.log(cartItems.value, 'cartItems扁平后数据')
         const addressList = addressRes.data || []
-        defaultAddress.value = addressList.find((item: any) => item.commonAddr === 1)
+        defaultAddress.value = addressList.find((item: any) => Number(item.commonAddr) === 1)
             || addressList[0]
             || null
     } finally {
@@ -93,6 +93,11 @@ const changeCartItemCount = async (item: any, count: number) => {
         shopId: item.shopId,
         count: count,
     })
+
+    if (!res.success) {
+        showFailToast(res.msg || '修改数量失败')
+        return
+    }
 
     const nextCount = item.prodCount + count
     if (nextCount > 0) {
@@ -129,18 +134,33 @@ onMounted(() => {
     <div class="cart-page">
         <van-nav-bar title="购物车" />
 
-        <van-cell v-if="defaultAddress" class="address-cell" icon="location-o" is-link @click="router.push('/address')">
+        <van-cell
+            v-if="defaultAddress"
+            class="address-cell"
+            icon="location-o"
+            is-link
+            @click="router.push('/address')"
+        >
             <template #title>
                 {{ defaultAddress.province }}{{ defaultAddress.city }}{{ defaultAddress.area }}{{ defaultAddress.addr }}
             </template>
         </van-cell>
+        <van-cell
+            v-else
+            class="address-cell"
+            icon="location-o"
+            title="请添加收货地址"
+            is-link
+            @click="router.push('/address')"
+        />
 
         <van-loading v-if="loading" class="cart-loading" vertical>加载中...</van-loading>
 
         <template v-else-if="cartList.length">
             <section v-for="shop in cartList" :key="shop.shopId" class="cart-shop">
                 <div class="shop-title">
-                    <van-checkbox :model-value="true" checked-color="#ee0a24" />
+                    <van-checkbox :model-value="allChecked" checked-color="#ee0a24"
+                        @update:model-value="toggleAllChecked" />
                     <strong>{{ shop.shopName }}</strong>
                 </div>
 

@@ -67,7 +67,13 @@ onMounted(async () => {
 </script>
 <template>
     <div class="category-page">
-        <van-search placeholder="请输入搜索关键词" shape="round" background="#fff" />
+        <van-search
+            placeholder="请输入搜索关键词"
+            shape="round"
+            background="#fff"
+            readonly
+            @click="router.push('/search')"
+        />
         <div class="category-content">
             <van-sidebar v-model="active" class="category-sidebar" @change="handleChangeCategory">
                 <van-sidebar-item :title="item.text" v-for="item in categoryList" :key="item.categoryId" />

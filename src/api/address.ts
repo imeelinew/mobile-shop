@@ -13,7 +13,7 @@ export const deleteAddress = (addrId: number) => {
 }
 
 export const setDefaultAddress = (addrId: number) => {
-    return put(`/p/address/defaultAddr/${addrId}`)
+    return put(`/p/address/defaultAddr/${addrId}`, {})
 }
 
 export const getAreaList = (pid: number) => {

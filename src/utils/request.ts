@@ -50,6 +50,9 @@ export const del = (
     url: string,
     data?: any
 ): Promise<any> => {
-    return request.delete(url, { data })
+    if (data !== undefined) {
+        return request.delete(url, { data })
+    }
+    return request.delete(url)
 }
 export default request

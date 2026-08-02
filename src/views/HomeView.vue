@@ -56,10 +56,10 @@ onMounted(() => {
 })
 
 const navItems = [
-    { text: '新品推荐', icon: 'new-o' },
-    { text: '限时特惠', icon: 'clock-o' },
-    { text: '每日疯抢', icon: 'fire-o' },
-    { text: '领优惠券', icon: 'coupon-o' },
+    { text: '新品推荐', icon: 'new-o', path: '/category' },
+    { text: '限时特惠', icon: 'clock-o', path: '/category' },
+    { text: '每日疯抢', icon: 'fire-o', path: '/category' },
+    { text: '领优惠券', icon: 'coupon-o', path: '/mine' },
 ]
 </script>
 <template>
@@ -67,12 +67,22 @@ const navItems = [
         <!-- 搜索 -->
         <van-search v-model="keyword" placeholder="请输入搜索关键词" shape="round" background="#fff" @click="goSearch" />
         <van-swipe class="banner-swipe" :autoplay="3000" lazy-render indicator-color="#ee0a24">
-            <van-swipe-item v-for="banner in bannerList" :key="banner.imgUrl">
+            <van-swipe-item
+                v-for="banner in bannerList"
+                :key="banner.imgUrl"
+                @click="banner.relation ? goDetail(banner.relation) : undefined"
+            >
                 <img class="banner-image" :src="banner.imgUrl" alt="商城轮播图" />
             </van-swipe-item>
         </van-swipe>
         <van-grid class="nav-grid" :border="false" :column-num="4">
-            <van-grid-item v-for="item in navItems" :key="item.text" :icon="item.icon" :text="item.text" />
+            <van-grid-item
+                v-for="item in navItems"
+                :key="item.text"
+                :icon="item.icon"
+                :text="item.text"
+                @click="router.push(item.path)"
+            />
         </van-grid>
         <!-- 公告 -->
         <van-notice-bar class="home-notice" left-icon="volume-o" color="#ed6a0c" background="#fffbe8">

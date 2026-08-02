@@ -20,6 +20,7 @@ const manageMode = ref(false)
 const addressList = ref<any[]>([])
 const chosenAddressId = ref<number>()
 const editingAddrId = ref<number>()
+const editingAddress = ref<any>(null)
 
 const receiver = ref('')
 const mobile = ref('')
@@ -44,14 +45,15 @@ function formatAddressList(list: any[]) {
         name: item.receiver,
         tel: item.mobile,
         address: item.province + item.city + item.area + item.addr,
-        isDefault: item.commonAddr === 1,
+        isDefault: Number(item.commonAddr) === 1,
     }))
 }
 
 async function loadList() {
     const res = await getAddressList()
     addressList.value = formatAddressList(res.data || [])
-    const defaultItem = addressList.value.find((item) => item.commonAddr === 1)
+    const defaultItem = addressList.value.find((item) => item.isDefault)
+        || addressList.value[0]
     chosenAddressId.value = defaultItem?.id
 }
 
@@ -69,6 +71,7 @@ function resetForm() {
     areaCascaderValue.value = undefined
     areaOptions.value = []
     editingAddrId.value = undefined
+    editingAddress.value = null
 }
 
 function openAdd() {
@@ -78,17 +81,21 @@ function openAdd() {
 }
 
 function openEdit(item: any) {
-    editingAddrId.value = item.addrId
-    receiver.value = item.receiver
-    mobile.value = item.mobile
-    addr.value = item.addr
+    // 保存当前编辑的完整地址，删除/判断默认都用这份，避免再按 id find 找错
+    editingAddress.value = item
+    editingAddrId.value = Number(item.addrId ?? item.id)
+    receiver.value = item.receiver || item.name || ''
+    mobile.value = item.mobile || item.tel || ''
+    addr.value = item.addr || ''
     provinceId.value = item.provinceId
     cityId.value = item.cityId
     areaIdValue.value = item.areaId
-    provinceName.value = item.province
-    cityName.value = item.city
-    areaName.value = item.area
-    areaText.value = `${item.province}/${item.city}/${item.area}`
+    provinceName.value = item.province || ''
+    cityName.value = item.city || ''
+    areaName.value = item.area || ''
+    areaText.value = item.province && item.city && item.area
+        ? `${item.province}/${item.city}/${item.area}`
+        : ''
     manageMode.value = false
     mode.value = 'edit'
 }
@@ -191,6 +198,12 @@ async function handleSave() {
 }
 
 async function handleSetDefault(item: any) {
+    if (!item?.addrId) return
+    if (item.isDefault || Number(item.commonAddr) === 1) {
+        showToast('已是默认地址')
+        return
+    }
+
     try {
         const res = await setDefaultAddress(item.addrId)
         if (res.success) {
@@ -206,18 +219,42 @@ async function handleSetDefault(item: any) {
     }
 }
 
-async function handleDelete() {
-    if (!editingAddrId.value) return
+// 普通点选只更新选中态；管理模式下点选才设为默认
+async function handleSelect(item: any) {
+    if (!item) return
+    chosenAddressId.value = item.id
+    if (manageMode.value) {
+        await handleSetDefault(item)
+    }
+}
 
-    const current = addressList.value.find((item) => item.addrId === editingAddrId.value)
-    if (current?.commonAddr === 1) {
+async function handleDelete() {
+    const target = editingAddress.value
+    const addrId = Number(target?.addrId ?? target?.id ?? editingAddrId.value)
+
+    if (!addrId) {
+        showFailToast('地址信息异常')
+        return
+    }
+
+    // 只拦截「当前这条」本身是默认地址的情况
+    // 不要再 addressList.find，避免 id 异常时误命中第一条默认地址
+    const isDefaultTarget = target?.isDefault || Number(target?.commonAddr) === 1
+    if (isDefaultTarget) {
+        showToast('请先更换默认地址')
+        return
+    }
+
+    // 再和列表里带「默认」标记的那条比对一次
+    const defaultItem = addressList.value.find((item) => item.isDefault)
+    if (defaultItem && Number(defaultItem.addrId ?? defaultItem.id) === addrId) {
         showToast('请先更换默认地址')
         return
     }
 
     try {
         await showConfirmDialog({ title: '提示', message: '确认删除该地址吗？' })
-        const res = await deleteAddress(editingAddrId.value)
+        const res = await deleteAddress(addrId)
         if (res.success) {
             showSuccessToast('删除地址成功')
             backToList()
@@ -255,16 +292,17 @@ onMounted(() => {
                 default-tag-text="默认"
                 add-button-text="新增地址"
                 @add="openAdd"
-                @edit="openEdit"
+                @edit="(item) => openEdit(item)"
+                @select="handleSelect"
             >
-                <template v-if="manageMode" #item-bottom="{ item }">
-                    <div class="manage-row" @click.stop>
+                <template #item-bottom="address">
+                    <div v-if="manageMode" class="manage-row" @click.stop>
                         <span
                             class="set-default"
-                            :class="{ active: item.isDefault }"
-                            @click="handleSetDefault(item)"
+                            :class="{ active: address.isDefault }"
+                            @click="handleSetDefault(address)"
                         >
-                            {{ item.isDefault ? '当前默认地址' : '设为默认地址' }}
+                            {{ address.isDefault ? '当前默认地址' : '设为默认地址' }}
                         </span>
                     </div>
                 </template>
@@ -342,8 +380,9 @@ onMounted(() => {
         overflow: hidden;
     }
 
-    :deep(.van-tag--danger) {
+    :deep(.van-address-item__tag) {
         background: var(--shop-primary);
+        border-color: var(--shop-primary);
     }
 
     :deep(.van-radio__icon--checked .van-icon) {
@@ -351,11 +390,18 @@ onMounted(() => {
         border-color: var(--shop-primary);
     }
 
+    :deep(.van-address-list__bottom) {
+        padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+    }
+
     :deep(.van-address-list__add) {
-        left: 20px;
-        right: 20px;
-        width: auto;
+        height: 80px;
+        border: none;
         border-radius: 999px;
+        background: var(--shop-primary);
+        color: #fff;
+        font-size: 30px;
+        font-weight: 600;
     }
 }
 

@@ -111,7 +111,9 @@ const loadHotSearches = async () => {
     const res = await getHotSearches()
 
     if (res.data?.length) {
-      hotSearches.value = res.data
+      hotSearches.value = res.data.map((item: any) =>
+        typeof item === 'string' ? item : (item.title || item.content)
+      ).filter(Boolean)
     } else {
       hotSearches.value = fallbackHotSearches
     }
@@ -120,6 +122,13 @@ const loadHotSearches = async () => {
   }
 
   console.log('热门搜索', hotSearches.value)
+}
+
+const goDetail = (prodId: number) => {
+  router.push({
+    path: '/product-detail',
+    query: { prodId }
+  })
 }
 onMounted(() => {
   loadHistory()
@@ -142,8 +151,15 @@ onBeforeUnmount(() => {
 
     <template v-else-if="hasSearched">
       <div v-if="products.length" class="result-list">
-        <van-card v-for="item in products" :key="item.prodId" class="result-card" :title="item.prodName"
-          :price="item.price" :thumb="item.pic" />
+        <van-card
+          v-for="item in products"
+          :key="item.prodId"
+          class="result-card"
+          :title="item.prodName"
+          :price="item.price"
+          :thumb="item.pic"
+          @click="goDetail(item.prodId)"
+        />
       </div>
       <van-empty v-else description="暂无搜索结果" />
     </template>
@@ -168,6 +184,28 @@ onBeforeUnmount(() => {
           </van-tag>
         </div>
         <van-empty v-else image-size="80" description="暂无搜索历史" />
+      </section>
+
+      <section v-if="hotSearches.length" class="panel">
+        <header class="panel-header">
+          <div class="panel-title">
+            <van-icon name="fire-o" />
+            <h3>热门搜索</h3>
+          </div>
+        </header>
+        <div class="tag-list">
+          <van-tag
+            v-for="item in hotSearches"
+            :key="item"
+            size="large"
+            plain
+            type="danger"
+            class="suggestion-item"
+            @click="doSearch(item)"
+          >
+            {{ item }}
+          </van-tag>
+        </div>
       </section>
 
       <section v-if="keyword.trim()" class="panel ai-section">
@@ -215,6 +253,7 @@ onBeforeUnmount(() => {
   border-radius: var(--shop-radius-sm);
   overflow: hidden;
   background: var(--shop-card);
+  cursor: pointer;
 
   :deep(.van-card__price) {
     color: var(--shop-primary);
