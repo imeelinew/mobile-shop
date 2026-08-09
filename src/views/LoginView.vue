@@ -8,12 +8,41 @@ import { showFailToast, showSuccessToast } from 'vant'
 import 'vant/es/toast/style'
 
 const router = useRouter()
+const demoAccount = {
+    username: 'zhangsan123',
+    password: '46584769479467',
+} as const
+
 const goRegister = () => {
     router.push('/register')
 }
 // 表单验证
 const username = ref('')
 const password = ref('')
+
+const copyCredential = async (label: string, value: string) => {
+    try {
+        await navigator.clipboard.writeText(value)
+    } catch {
+        const input = document.createElement('textarea')
+        input.value = value
+        input.style.position = 'fixed'
+        input.style.opacity = '0'
+        document.body.appendChild(input)
+        input.select()
+        document.execCommand('copy')
+        input.remove()
+    }
+
+    showSuccessToast(`${label}已复制`)
+}
+
+const fillDemoAccount = () => {
+    username.value = demoAccount.username
+    password.value = demoAccount.password
+    showSuccessToast('演示账号已填入')
+}
+
 const onSubmit = async (values) => {
     try {
         const result = await loginApi({
@@ -59,13 +88,27 @@ const passwordValidator = (value) => {
             <dl>
                 <div>
                     <dt>账号</dt>
-                    <dd>zhangsan123</dd>
+                    <dd>{{ demoAccount.username }}</dd>
+                    <button type="button" class="credential-copy" aria-label="复制账号"
+                        @click="copyCredential('账号', demoAccount.username)">
+                        <van-icon name="description-o" aria-hidden="true" />
+                        <span>复制</span>
+                    </button>
                 </div>
                 <div>
                     <dt>密码</dt>
-                    <dd>46584769479467</dd>
+                    <dd>{{ demoAccount.password }}</dd>
+                    <button type="button" class="credential-copy" aria-label="复制密码"
+                        @click="copyCredential('密码', demoAccount.password)">
+                        <van-icon name="description-o" aria-hidden="true" />
+                        <span>复制</span>
+                    </button>
                 </div>
             </dl>
+            <button type="button" class="fill-demo-account" @click="fillDemoAccount">
+                <van-icon name="edit" aria-hidden="true" />
+                <span>一键填入登录信息</span>
+            </button>
         </section>
 
         <van-form class="auth-form" @submit="onSubmit">
@@ -155,7 +198,8 @@ const passwordValidator = (value) => {
         min-width: 0;
         padding: 14px 16px;
         display: grid;
-        grid-template-columns: 72px minmax(0, 1fr);
+        grid-template-columns: 72px minmax(0, 1fr) auto;
+        gap: 10px;
         align-items: center;
         border-radius: var(--shop-radius-sm);
         background: var(--shop-bg);
@@ -173,7 +217,49 @@ const passwordValidator = (value) => {
         font-size: 24px;
         font-weight: 600;
         overflow-wrap: anywhere;
+        user-select: text;
+        -webkit-user-select: text;
     }
+}
+
+.credential-copy,
+.fill-demo-account {
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.credential-copy {
+    padding: 8px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 999px;
+    background: var(--shop-card);
+    color: var(--shop-primary);
+    font-size: 20px;
+}
+
+.fill-demo-account {
+    width: 100%;
+    margin-top: 16px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: var(--shop-radius-sm);
+    background: var(--shop-primary-soft);
+    color: var(--shop-primary);
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.credential-copy:focus-visible,
+.fill-demo-account:focus-visible {
+    outline: 2px solid var(--shop-primary);
+    outline-offset: 2px;
 }
 
 .demo-account-heading {
