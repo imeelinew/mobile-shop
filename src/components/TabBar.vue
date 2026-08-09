@@ -1,28 +1,5 @@
-<script lang="ts" setup>
-import { ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
-
-const route = useRoute()
-const active = ref(0)
-
-const tabMap = {
-    '/home': 0,
-    '/category': 1,
-    '/cart': 2,
-    '/mine': 3,
-}
-watch(
-    () => route.path,
-    (path) => {
-        active.value = tabMap[path] ?? 0
-    },
-    {
-        immediate: true,
-    }
-)
-</script>
 <template>
-    <van-tabbar v-model="active" active-color="#ee0a24" inactive-color="#646566" safe-area-inset-bottom>
+    <van-tabbar route active-color="#ee0a24" inactive-color="#646566" safe-area-inset-bottom>
         <van-tabbar-item to="/home" icon="home-o">
             首页
         </van-tabbar-item>

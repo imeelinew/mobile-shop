@@ -56,7 +56,6 @@ const passwordValidator = (value) => {
                 <van-icon name="contact-o" aria-hidden="true" />
                 <h2 id="demo-account-title">演示账号</h2>
             </div>
-            <p>面试预览可直接使用以下账号登录</p>
             <dl>
                 <div>
                     <dt>账号</dt>
@@ -146,15 +145,8 @@ const passwordValidator = (value) => {
     background: var(--shop-card);
     box-shadow: 0 8px 24px rgba(50, 50, 51, 0.04);
 
-    > p {
-        margin: 10px 0 20px;
-        color: var(--shop-text-secondary);
-        font-size: 22px;
-        line-height: 1.5;
-    }
-
     dl {
-        margin: 0;
+        margin: 18px 0 0;
         display: grid;
         gap: 12px;
     }
