@@ -1,4 +1,6 @@
 const API_ORIGIN = 'http://shop-api.edu.koobietech.com'
+const STATIC_ORIGIN = 'http://shop-static.edu.koobietech.com/'
+const STATIC_PROXY_PATH = '/media/'
 
 export async function onRequest({ request, params }) {
   const pathSegments = Array.isArray(params.path) ? params.path : [params.path]
@@ -22,5 +24,21 @@ export async function onRequest({ request, params }) {
     redirect: 'manual'
   })
 
-  return fetch(upstreamRequest)
+  const response = await fetch(upstreamRequest)
+  const contentType = response.headers.get('Content-Type') || ''
+
+  if (!contentType.includes('application/json')) {
+    return response
+  }
+
+  const body = (await response.text()).replaceAll(STATIC_ORIGIN, STATIC_PROXY_PATH)
+  const responseHeaders = new Headers(response.headers)
+  responseHeaders.delete('Content-Length')
+  responseHeaders.delete('Content-Encoding')
+
+  return new Response(body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: responseHeaders
+  })
 }
