@@ -51,6 +51,24 @@ const passwordValidator = (value) => {
             <p>登录后继续你的购物之旅</p>
         </div>
 
+        <section class="demo-account" aria-labelledby="demo-account-title">
+            <div class="demo-account-heading">
+                <van-icon name="contact-o" aria-hidden="true" />
+                <h2 id="demo-account-title">演示账号</h2>
+            </div>
+            <p>面试预览可直接使用以下账号登录</p>
+            <dl>
+                <div>
+                    <dt>账号</dt>
+                    <dd>zhangsan123</dd>
+                </div>
+                <div>
+                    <dt>密码</dt>
+                    <dd>46584769479467</dd>
+                </div>
+            </dl>
+        </section>
+
         <van-form class="auth-form" @submit="onSubmit">
             <van-cell-group inset>
                 <van-field v-model="username" name="username" label="用户名" placeholder="用户名" :rules="[{ required: true, message: '请填写用户名' }, {
@@ -117,6 +135,70 @@ const passwordValidator = (value) => {
         overflow: hidden;
         border-radius: var(--shop-radius);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+    }
+}
+
+.demo-account {
+    margin: 0 0 28px;
+    padding: 24px;
+    border: 1px solid rgba(238, 10, 36, 0.12);
+    border-radius: var(--shop-radius);
+    background: var(--shop-card);
+    box-shadow: 0 8px 24px rgba(50, 50, 51, 0.04);
+
+    > p {
+        margin: 10px 0 20px;
+        color: var(--shop-text-secondary);
+        font-size: 22px;
+        line-height: 1.5;
+    }
+
+    dl {
+        margin: 0;
+        display: grid;
+        gap: 12px;
+    }
+
+    dl > div {
+        min-width: 0;
+        padding: 14px 16px;
+        display: grid;
+        grid-template-columns: 72px minmax(0, 1fr);
+        align-items: center;
+        border-radius: var(--shop-radius-sm);
+        background: var(--shop-bg);
+    }
+
+    dt {
+        color: var(--shop-text-secondary);
+        font-size: 22px;
+    }
+
+    dd {
+        margin: 0;
+        color: var(--shop-text);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 24px;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+}
+
+.demo-account-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--shop-primary);
+
+    :deep(.van-icon) {
+        font-size: 30px;
+    }
+
+    h2 {
+        margin: 0;
+        color: var(--shop-text);
+        font-size: 28px;
+        font-weight: 650;
     }
 }
 
