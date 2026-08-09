@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { searchProducts, getHotSearches } from '@/api/search'
 import { getSearchSuggestions, type AISource } from '@/ai/searchSuggestions'
 import type { SearchProduct } from '@/types/search'
+import ContentSkeleton from '@/components/ContentSkeleton.vue'
 
 const router = useRouter()
 const keyword = ref('')
@@ -14,6 +15,7 @@ const loading = ref<boolean>(false)
 const hasSearched = ref<boolean>(false)
 const HISTORY_KEY = 'search-history'
 const hotSearches = ref<string[]>([])
+const hotLoading = ref(true)
 
 const fallbackHotSearches = [
   'iPhone',
@@ -134,6 +136,8 @@ const loadHotSearches = async () => {
     }
   } catch {
     hotSearches.value = fallbackHotSearches
+  } finally {
+    hotLoading.value = false
   }
 
   console.log('热门搜索', hotSearches.value)
@@ -162,7 +166,7 @@ onBeforeUnmount(() => {
     <van-search v-model="keyword" placeholder="请输入搜索关键词" shape="round" show-action @cancel="resetSearch"
       clearable @search="doSearch" @clear="resetSearch" @update:model-value="handleAIInput" />
 
-    <van-loading v-if="loading" class="search-loading" vertical>搜索中...</van-loading>
+    <ContentSkeleton v-if="loading" variant="list" :rows="4" />
 
     <template v-else-if="hasSearched">
       <van-list
@@ -204,6 +208,10 @@ onBeforeUnmount(() => {
           </van-tag>
         </div>
         <van-empty v-else image-size="80" description="暂无搜索历史" />
+      </section>
+
+      <section v-if="hotLoading" class="panel">
+        <ContentSkeleton variant="lines" :rows="3" compact />
       </section>
 
       <section v-if="showHotSearches" class="panel">

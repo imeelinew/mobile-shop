@@ -7,6 +7,7 @@ import { getCollectionStatus, toggleCollection, getProductCommentData } from '@/
 import { addCart } from '@/api/cart'
 import { showSuccessToast, showFailToast } from 'vant'
 import ActionPanel from '@/components/ActionPanel.vue'
+import ContentSkeleton from '@/components/ContentSkeleton.vue'
 import 'vant/es/toast/style'
 const router = useRouter()
 const route = useRoute()
@@ -14,7 +15,7 @@ const product = ref<any>(null)
 
 //product的图片数组，用逗号分隔
 const productImages = ref<string[]>([])
-const loading = ref(false)
+const loading = ref(true)
 const aiSellingPoints = ref<string[]>([])
 const aiSource = ref('fallback')
 const isCollected = ref(false)
@@ -34,7 +35,11 @@ const selectedSku = ref<any>(null)
 //加载产品数据
 const loadProductDetail = async () => {
   const prodId = Number(route.query.prodId)
-  if (!prodId) return
+  if (!prodId) {
+    loading.value = false
+    aiLoading.value = false
+    return
+  }
   loading.value = true
 
   try {
@@ -53,14 +58,19 @@ const loadProductDetail = async () => {
     const resComment = await getProductCommentData(prodId)
     commentData.value = resComment.data
   } catch (error) {
-    Promise.reject(error)
+    console.error('商品详情加载失败', error)
   } finally {
     loading.value = false
   }
   if (product.value) {
-    const res = await getProductSellingPoints(product.value)
-    aiSource.value = res.source
-    aiSellingPoints.value = res.result
+    try {
+      const res = await getProductSellingPoints(product.value)
+      aiSource.value = res.source
+      aiSellingPoints.value = res.result
+    } finally {
+      aiLoading.value = false
+    }
+  } else {
     aiLoading.value = false
   }
 }
@@ -146,11 +156,10 @@ onMounted(() => {
   <van-nav-bar title="商品详情" left-text="返回" left-arrow @click-left="goBack" fixed placeholder />
 
   <div class="product-detail-page">
-    <div v-if="loading" class="loading-box">
-      <van-loading vertical>加载中...</van-loading>
-    </div>
+    <ContentSkeleton v-if="loading" variant="detail" :rows="3" />
 
-    <div v-else-if="product" class="detail-content">
+    <template v-else-if="product">
+    <div class="detail-content">
       <van-swipe class="my-swipe" :autoplay="3000" indicator-color="white">
         <van-swipe-item v-for="image in productImages" :key="image">
           <van-image width="100%" height="100%" fit="contain" :src="image" />
@@ -172,10 +181,9 @@ onMounted(() => {
         {{ product.price }}
       </p>
     </div>
-    <van-empty v-else description="暂无数据" />
 
     <div v-if="aiLoading" class="ai-loading">
-      AI 正在分析商品卖点...
+      <ContentSkeleton variant="lines" :rows="3" compact />
     </div>
     <div v-else-if="aiSellingPoints.length" class="ai-selling-points">
       <div class="ai-selling-title">
@@ -216,6 +224,8 @@ onMounted(() => {
     </div>
 
     <div v-if="product?.content" class="product-content" v-html="product.content"></div>
+    </template>
+    <van-empty v-else description="暂无数据" />
   </div>
 
   <van-action-sheet v-model:show="isShowBuyPanel" title="确认商品" round class="buy-sheet">

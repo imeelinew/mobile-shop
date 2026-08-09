@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getBannerList, getNoticeList, getProductGroups } from '@/api/home'
 import type { Banner, Notice, Product, ProductGroup } from '@/types/home'
+import ContentSkeleton from '@/components/ContentSkeleton.vue'
 
 const router = useRouter()
 const keyword = ref<string>('')
@@ -31,6 +32,7 @@ const goCategory = (title: string) => {
 const bannerList = ref<Banner[]>([])
 const noticeList = ref<Notice[]>([])
 const productGroups = ref<ProductGroup[]>([])
+const loading = ref(true)
 
 const initHome = async () => {
     try {
@@ -47,7 +49,9 @@ const initHome = async () => {
         noticeList.value = noticeResult.data
         productGroups.value = productGroupsResult.data
     } catch (error) {
-        Promise.reject(error)
+        console.error('首页内容加载失败', error)
+    } finally {
+        loading.value = false
     }
 }
 onMounted(() => {
@@ -65,6 +69,8 @@ const navItems = [
     <div class="home-page">
         <!-- 搜索 -->
         <van-search v-model="keyword" placeholder="请输入搜索关键词" shape="round" background="#fff" @click="goSearch" />
+        <ContentSkeleton v-if="loading" variant="home" />
+        <template v-else>
         <van-swipe
             v-if="bannerList.length"
             class="banner-swipe"
@@ -136,6 +142,7 @@ const navItems = [
                 </article>
             </div>
         </section>
+        </template>
     </div>
 </template>
 <style lang="scss" scoped>

@@ -5,6 +5,7 @@ import { confirmReceipt, getMyOrderInfo, payOrder } from '@/api/order'
 import { showConfirmDialog, showFailToast, showSuccessToast } from 'vant'
 import 'vant/es/dialog/style'
 import 'vant/es/toast/style'
+import ContentSkeleton from '@/components/ContentSkeleton.vue'
 
 type OrderTabState = {
     current: number
@@ -188,7 +189,12 @@ onMounted(() => {
 
         <van-tabs v-model:active="active" sticky @click-tab="handleTabChange">
             <van-tab v-for="(tab, index) in tabs" :key="tab.status" :name="index" :title="tab.title">
-                <van-empty v-if="tab.state.finished && !tab.state.list.length" description="暂无订单" />
+                <ContentSkeleton
+                    v-if="tab.state.load && tab.state.current === 1 && !tab.state.list.length"
+                    variant="list"
+                    :rows="4"
+                />
+                <van-empty v-else-if="tab.state.finished && !tab.state.list.length" description="暂无订单" />
 
                 <van-list
                     v-else

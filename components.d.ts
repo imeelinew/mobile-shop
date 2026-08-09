@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     ActionPanel: typeof import('./src/components/ActionPanel.vue')['default']
+    ContentSkeleton: typeof import('./src/components/ContentSkeleton.vue')['default']
     Layout: typeof import('./src/components/Layout.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

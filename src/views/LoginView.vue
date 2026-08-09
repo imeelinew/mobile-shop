@@ -19,6 +19,7 @@ const goRegister = () => {
 // 表单验证
 const username = ref('')
 const password = ref('')
+const submitting = ref(false)
 
 const copyCredential = async (label: string, value: string) => {
     try {
@@ -44,6 +45,8 @@ const fillDemoAccount = () => {
 }
 
 const onSubmit = async (values) => {
+    if (submitting.value) return
+    submitting.value = true
     try {
         const result = await loginApi({
             userName: values.username,
@@ -61,6 +64,8 @@ const onSubmit = async (values) => {
     catch (error) {
         console.error('登录失败', error)
         showFailToast('网络请求失败')
+    } finally {
+        submitting.value = false
     }
 }
 // 正则
@@ -123,7 +128,7 @@ const passwordValidator = (value) => {
                 }]" />
             </van-cell-group>
             <div class="submit-box">
-                <van-button round block type="danger" native-type="submit">
+                <van-button round block type="danger" native-type="submit" :loading="submitting" loading-text="登录中...">
                     登录
                 </van-button>
             </div>

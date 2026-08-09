@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { getCategoryList, getCategoryProducts } from '@/api/category'
 import { useRouter, useRoute } from 'vue-router';
+import ContentSkeleton from '@/components/ContentSkeleton.vue'
 const router = useRouter();
 const route = useRoute();
 
@@ -36,6 +37,8 @@ const goToDetail = (prodId: number) => {
 const active = ref(0)          // 左侧当前选中的下标
 const categoryList = ref([])   // 左侧分类
 const productList = ref([])    // 右侧商品
+const loading = ref(true)
+const productLoading = ref(false)
 
 const handleGetCategoryList = async () => {
     const res = await getCategoryList()
@@ -49,9 +52,13 @@ const handleGetCategoryList = async () => {
     }
 }
 const handleGetCategoryProducts = async (categoryId: number) => {
-    const res = await getCategoryProducts(categoryId)
-    productList.value = res.data?.records || []
-    console.log(productList.value, 'productList')
+    productLoading.value = true
+    try {
+        const res = await getCategoryProducts(categoryId)
+        productList.value = res.data?.records || []
+    } finally {
+        productLoading.value = false
+    }
 }
 const handleChangeCategory = async (index: number) => {
     const category = categoryList.value[index]
@@ -61,8 +68,11 @@ const handleChangeCategory = async (index: number) => {
 }
 onMounted(async () => {
     applyHomeCategory()
-    await handleGetCategoryList()
-    console.log(categoryList.value, 'categoryList')
+    try {
+        await handleGetCategoryList()
+    } finally {
+        loading.value = false
+    }
 })
 </script>
 <template>
@@ -74,11 +84,14 @@ onMounted(async () => {
             readonly
             @click="router.push('/search')"
         />
-        <div class="category-content">
+        <ContentSkeleton v-if="loading" variant="list" :rows="5" />
+        <div v-else class="category-content">
             <van-sidebar v-model="active" class="category-sidebar" @change="handleChangeCategory">
                 <van-sidebar-item :title="item.text" v-for="item in categoryList" :key="item.categoryId" />
             </van-sidebar>
             <main class="product-panel">
+                <ContentSkeleton v-if="productLoading" variant="list" :rows="4" compact />
+                <template v-else>
                 <img v-if="categoryList[active]?.pic" class="category-banner" :src="categoryList[active].pic" alt="">
                 <div class="product-list">
                     <van-card v-for="item in productList" :key="item.prodId" class="product-card"
@@ -90,6 +103,7 @@ onMounted(async () => {
                     </van-card>
                 </div>
                 <van-empty v-if="!productList.length" description="该分类暂无商品" />
+                </template>
             </main>
         </div>
     </div>

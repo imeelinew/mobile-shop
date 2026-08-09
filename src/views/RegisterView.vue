@@ -11,7 +11,10 @@ const router = useRouter()
 // 表单验证
 const username = ref('')
 const password = ref('')
+const submitting = ref(false)
 const onRegister = async (values) => {
+    if (submitting.value) return
+    submitting.value = true
     try {
         const result = await registerApi({
             userName: values.username,
@@ -30,6 +33,8 @@ const onRegister = async (values) => {
     } catch (error) {
         console.error('注册失败', error)
         showFailToast('网络请求失败')
+    } finally {
+        submitting.value = false
     }
 }
 const goBack = () => {
@@ -66,7 +71,7 @@ const passwordValidator = (value) => {
                 }]" />
             </van-cell-group>
             <div class="submit-box">
-                <van-button round block type="danger" native-type="submit">
+                <van-button round block type="danger" native-type="submit" :loading="submitting" loading-text="提交中...">
                     创建账号
                 </van-button>
             </div>

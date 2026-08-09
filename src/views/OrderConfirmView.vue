@@ -5,6 +5,7 @@ import { confirmOrder, getAddressList, payOrder, submitOrder } from '@/api/order
 import { showConfirmDialog, showFailToast, showSuccessToast, showToast } from 'vant'
 import 'vant/es/dialog/style'
 import 'vant/es/toast/style'
+import ContentSkeleton from '@/components/ContentSkeleton.vue'
 
 const router = useRouter()
 const loading = ref(true)
@@ -116,7 +117,7 @@ onMounted(() => {
     <div class="order-confirm-page">
         <van-nav-bar title="订单确认页面" left-text="返回" left-arrow @click-left="router.back()" />
 
-        <van-loading v-if="loading" class="page-loading" vertical>加载中...</van-loading>
+        <ContentSkeleton v-if="loading" variant="form" :rows="5" />
 
         <template v-else-if="confirmData">
             <div

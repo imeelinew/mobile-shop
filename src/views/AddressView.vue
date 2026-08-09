@@ -12,6 +12,7 @@ import {
 import { showConfirmDialog, showFailToast, showSuccessToast, showToast } from 'vant'
 import 'vant/es/toast/style'
 import 'vant/es/dialog/style'
+import ContentSkeleton from '@/components/ContentSkeleton.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -26,6 +27,7 @@ const isSelectMode = computed(() => {
 const listTitle = computed(() => (isSelectMode.value ? '选择收货地址' : '地址列表'))
 const addressList = ref<any[]>([])
 const chosenAddressId = ref<number>()
+const listLoading = ref(true)
 const editingAddrId = ref<number>()
 const editingAddress = ref<any>(null)
 
@@ -57,11 +59,16 @@ function formatAddressList(list: any[]) {
 }
 
 async function loadList() {
-    const res = await getAddressList()
-    addressList.value = formatAddressList(res.data || [])
-    const defaultItem = addressList.value.find((item) => item.isDefault)
-        || addressList.value[0]
-    chosenAddressId.value = defaultItem?.id
+    listLoading.value = true
+    try {
+        const res = await getAddressList()
+        addressList.value = formatAddressList(res.data || [])
+        const defaultItem = addressList.value.find((item) => item.isDefault)
+            || addressList.value[0]
+        chosenAddressId.value = defaultItem?.id
+    } finally {
+        listLoading.value = false
+    }
 }
 
 function resetForm() {
@@ -312,7 +319,9 @@ onMounted(() => {
                 @click-right="toggleManageMode"
             />
 
+            <ContentSkeleton v-if="listLoading" variant="form" :rows="4" />
             <van-address-list
+                v-else
                 v-model="chosenAddressId"
                 :list="addressList"
                 default-tag-text="默认"

@@ -3,13 +3,19 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getOrderCount } from '@/api/order'
 import { removeToken } from '@/utils/token'
+import ContentSkeleton from '@/components/ContentSkeleton.vue'
 
 const router = useRouter()
 const orderCount = ref<any>({})
+const loading = ref(true)
 
 onMounted(async () => {
-    const res = await getOrderCount()
-    orderCount.value = res.data
+    try {
+        const res = await getOrderCount()
+        orderCount.value = res.data
+    } finally {
+        loading.value = false
+    }
 })
 
 const logout = () => {
@@ -26,6 +32,8 @@ const openOrders = (active = 0) => {
 </script>
 <template>
     <div class="mine-page">
+        <ContentSkeleton v-if="loading" variant="profile" />
+        <template v-else>
         <div class="profile">
             <van-image round width="100px" height="100px" fit="cover"
                 src="https://img.yzcdn.cn/vant/cat.jpeg"></van-image>
@@ -86,6 +94,7 @@ const openOrders = (active = 0) => {
         <div class="logout">
             <van-button round block type="danger" @click="logout">退出登录</van-button>
         </div>
+        </template>
     </div>
 </template>
 <style lang="scss" scoped>

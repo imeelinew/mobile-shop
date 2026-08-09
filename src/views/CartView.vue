@@ -5,6 +5,7 @@ import { getAddressList } from '@/api/order'
 import { showSuccessToast, showFailToast } from 'vant'
 import 'vant/es/toast/style'
 import { useRouter } from 'vue-router'
+import ContentSkeleton from '@/components/ContentSkeleton.vue'
 const router = useRouter()
 const loading = ref(true)
 const cartList = ref<any[]>([])
@@ -132,7 +133,7 @@ onMounted(() => {
         <van-nav-bar title="购物车" />
 
         <van-cell
-            v-if="defaultAddress"
+            v-if="!loading && defaultAddress"
             class="address-cell"
             icon="location-o"
             is-link
@@ -143,7 +144,7 @@ onMounted(() => {
             </template>
         </van-cell>
         <van-cell
-            v-else
+            v-else-if="!loading"
             class="address-cell"
             icon="location-o"
             title="请添加收货地址"
@@ -151,7 +152,7 @@ onMounted(() => {
             @click="router.push({ path: '/address', query: { from: 'cart' } })"
         />
 
-        <van-loading v-if="loading" class="cart-loading" vertical>加载中...</van-loading>
+        <ContentSkeleton v-if="loading" variant="list" :rows="4" />
 
         <template v-else-if="cartList.length">
             <section v-for="shop in cartList" :key="shop.shopId" class="cart-shop">
