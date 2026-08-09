@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { getAddressList } from '@/api/order'
 import {
     addAddress,
@@ -14,9 +14,16 @@ import 'vant/es/toast/style'
 import 'vant/es/dialog/style'
 
 const router = useRouter()
+const route = useRoute()
 
 const mode = ref<'list' | 'add' | 'edit'>('list')
 const manageMode = ref(false)
+// 订单确认 / 购物车进来：点选地址后设为默认并返回，确认页会读最新默认地址
+const isSelectMode = computed(() => {
+    const from = String(route.query.from || '')
+    return from === 'order' || from === 'cart'
+})
+const listTitle = computed(() => (isSelectMode.value ? '选择收货地址' : '地址列表'))
 const addressList = ref<any[]>([])
 const chosenAddressId = ref<number>()
 const editingAddrId = ref<number>()
@@ -114,6 +121,11 @@ function goBack() {
     router.back()
 }
 
+function toggleManageMode() {
+    if (isSelectMode.value) return
+    manageMode.value = !manageMode.value
+}
+
 const openAreaCascader = async () => {
     try {
         const res = await getAreaList(0)
@@ -197,34 +209,48 @@ async function handleSave() {
     }
 }
 
-async function handleSetDefault(item: any) {
-    if (!item?.addrId) return
+async function handleSetDefault(item: any, options: { silentIfSame?: boolean } = {}) {
+    const addrId = Number(item?.addrId ?? item?.id)
+    if (!addrId) return false
     if (item.isDefault || Number(item.commonAddr) === 1) {
-        showToast('已是默认地址')
-        return
+        if (!options.silentIfSame) {
+            showToast('已是默认地址')
+        }
+        return true
     }
 
     try {
-        const res = await setDefaultAddress(item.addrId)
+        const res = await setDefaultAddress(addrId)
         if (res.success) {
             showSuccessToast('设置默认地址成功')
             manageMode.value = false
             await loadList()
-        } else {
-            showFailToast(res.msg || '设置失败')
+            return true
         }
+        showFailToast(res.msg || '设置失败')
+        return false
     } catch (error) {
         console.log(error, 'error设置默认地址')
         showFailToast('设置失败')
+        return false
     }
 }
 
-// 普通点选只更新选中态；管理模式下点选才设为默认
+// 管理模式：点选设为默认；从订单/购物车进入：点选后设默认并返回
 async function handleSelect(item: any) {
     if (!item) return
     chosenAddressId.value = item.id
+
     if (manageMode.value) {
         await handleSetDefault(item)
+        return
+    }
+
+    if (isSelectMode.value) {
+        const ok = await handleSetDefault(item, { silentIfSame: true })
+        if (ok) {
+            router.back()
+        }
     }
 }
 
@@ -278,12 +304,12 @@ onMounted(() => {
     <div class="address-view">
         <div v-if="mode === 'list'" class="list-mode">
             <van-nav-bar
-                title="地址列表"
+                :title="listTitle"
                 left-text="返回"
-                :right-text="manageMode ? '完成' : '管理'"
+                :right-text="isSelectMode ? '' : (manageMode ? '完成' : '管理')"
                 left-arrow
                 @click-left="goBack"
-                @click-right="manageMode = !manageMode"
+                @click-right="toggleManageMode"
             />
 
             <van-address-list

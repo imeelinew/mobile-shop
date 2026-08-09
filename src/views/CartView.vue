@@ -53,8 +53,6 @@ const getTotalPrice = async () => {
 //监听选中商品变化
 watch(selectedBasketIds, async () => {
     await getTotalPrice()
-    console.log(selectedBasketIds.value, 'selectedBasketIds选中的商品')
-    console.log(totalPrice.value, 'totalPrice总价')
 })
 //删除商品
 const handleDeleteCartItem = async (basketIds: number[]) => {
@@ -73,7 +71,6 @@ const loadCart = async () => {
         cartItems.value.forEach((item: any) => {
             item.checked = false
         })
-        console.log(cartItems.value, 'cartItems扁平后数据')
         const addressList = addressRes.data || []
         defaultAddress.value = addressList.find((item: any) => Number(item.commonAddr) === 1)
             || addressList[0]
@@ -139,7 +136,7 @@ onMounted(() => {
             class="address-cell"
             icon="location-o"
             is-link
-            @click="router.push('/address')"
+            @click="router.push({ path: '/address', query: { from: 'cart' } })"
         >
             <template #title>
                 {{ defaultAddress.province }}{{ defaultAddress.city }}{{ defaultAddress.area }}{{ defaultAddress.addr }}
@@ -151,7 +148,7 @@ onMounted(() => {
             icon="location-o"
             title="请添加收货地址"
             is-link
-            @click="router.push('/address')"
+            @click="router.push({ path: '/address', query: { from: 'cart' } })"
         />
 
         <van-loading v-if="loading" class="cart-loading" vertical>加载中...</van-loading>

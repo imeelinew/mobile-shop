@@ -1,22 +1,10 @@
-type AIConfig = {
-  apiKey: string
-  baseURL: string
-  model: string
-}
-
 type AIRequestOptions = {
   timeout?: number
   maxTokens?: number
   temperature?: number
 }
 
-const getConfig = (): AIConfig => ({
-  apiKey: import.meta.env.VITE_AI_API_KEY?.trim() || '',
-  baseURL: (import.meta.env.VITE_AI_BASE_URL || 'https://api.deepseek.com').replace(/\/$/, ''),
-  model: import.meta.env.VITE_AI_MODEL || 'deepseek-chat'
-})
-
-export const isAvailable = () => Boolean(getConfig().apiKey)
+export const isAvailable = () => true
 
 /**
  * OpenAI 兼容接口调用层。DeepSeek、通义等兼容服务只需更换三个环境变量。
@@ -26,24 +14,19 @@ export const requestAI = async (
   promptText: string,
   options: AIRequestOptions = {}
 ) => {
-  const { apiKey, baseURL, model } = getConfig()
-  if (!apiKey) throw new Error('AI 模型未配置')
-
   const controller = new AbortController()
   const timer = window.setTimeout(() => controller.abort(), options.timeout ?? 10_000)
 
   try {
-    const response = await fetch(`${baseURL}/chat/completions`, {
+    const response = await fetch('/ai/chat', {
       method: 'POST',
       signal: controller.signal,
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model,
-        messages: [{ role: 'user', content: promptText }],
-        max_tokens: options.maxTokens ?? 200,
+        promptText,
+        maxTokens: options.maxTokens ?? 200,
         temperature: options.temperature ?? 0.7
       })
     })
@@ -58,7 +41,7 @@ export const requestAI = async (
     }
 
     const data = await response.json()
-    const text = data.choices?.[0]?.message?.content?.trim()
+    const text = data.text?.trim()
     if (!text) throw new Error('AI 返回内容为空')
     return { text }
   } catch (error) {

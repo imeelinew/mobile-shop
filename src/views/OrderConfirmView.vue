@@ -48,6 +48,10 @@ const loadOrder = async () => {
 
 const handleSubmitOrder = async () => {
     if (!confirmData.value) return
+    if (!defaultAddress.value?.addrId) {
+        showFailToast('请先添加收货地址')
+        return
+    }
 
     try {
         const orderShopParams = confirmData.value.shopCartOrders.map((shop: any) => ({
@@ -115,7 +119,11 @@ onMounted(() => {
         <van-loading v-if="loading" class="page-loading" vertical>加载中...</van-loading>
 
         <template v-else-if="confirmData">
-            <div v-if="defaultAddress" class="address-card" @click="router.push('/address')">
+            <div
+                v-if="defaultAddress"
+                class="address-card"
+                @click="router.push({ path: '/address', query: { from: 'order' } })"
+            >
                 <van-icon name="manager" class="address-icon" />
                 <div class="address-info">
                     <div class="address-name">姓名：{{ defaultAddress.receiver }} {{ defaultAddress.mobile }}</div>
@@ -123,7 +131,13 @@ onMounted(() => {
                 </div>
                 <van-icon name="arrow" class="address-arrow" />
             </div>
-            <van-cell v-else class="address-empty" title="请先添加收货地址" is-link @click="router.push('/address')" />
+            <van-cell
+                v-else
+                class="address-empty"
+                title="请先添加收货地址"
+                is-link
+                @click="router.push({ path: '/address', query: { from: 'order' } })"
+            />
 
             <section v-for="shop in confirmData.shopCartOrders" :key="shop.shopId" class="shop-order">
                 <h3>{{ shop.shopName }}</h3>

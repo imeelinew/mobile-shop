@@ -2,7 +2,7 @@ import axios from 'axios'
 import { getToken } from '@/utils/token'
 
 const request = axios.create({
-    baseURL: import.meta.env.VITE_APP_URL,
+    baseURL: import.meta.env.VITE_APP_URL || '/api',
     timeout: 5000,
 })
 // 请求拦截器

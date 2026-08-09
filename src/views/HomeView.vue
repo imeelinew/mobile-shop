@@ -46,9 +46,8 @@ const initHome = async () => {
         bannerList.value = bannerResult.data
         noticeList.value = noticeResult.data
         productGroups.value = productGroupsResult.data
-        console.log(bannerList.value, 'bannerList', noticeList.value, 'noticeList', productGroups.value, 'productGroups')
     } catch (error) {
-        console.error(error)
+        Promise.reject(error)
     }
 }
 onMounted(() => {
@@ -66,13 +65,23 @@ const navItems = [
     <div class="home-page">
         <!-- 搜索 -->
         <van-search v-model="keyword" placeholder="请输入搜索关键词" shape="round" background="#fff" @click="goSearch" />
-        <van-swipe class="banner-swipe" :autoplay="3000" lazy-render indicator-color="#ee0a24">
+        <van-swipe
+            v-if="bannerList.length"
+            class="banner-swipe"
+            :autoplay="3000"
+            lazy-render
+            indicator-color="#ee0a24"
+        >
             <van-swipe-item
                 v-for="banner in bannerList"
                 :key="banner.imgUrl"
-                @click="banner.relation ? goDetail(banner.relation) : undefined"
             >
-                <img class="banner-image" :src="banner.imgUrl" alt="商城轮播图" />
+                <img
+                    class="banner-image"
+                    :src="banner.imgUrl"
+                    alt="商城轮播图"
+                    @click="banner.relation && goDetail(banner.relation)"
+                />
             </van-swipe-item>
         </van-swipe>
         <van-grid class="nav-grid" :border="false" :column-num="4">
@@ -85,8 +94,21 @@ const navItems = [
             />
         </van-grid>
         <!-- 公告 -->
-        <van-notice-bar class="home-notice" left-icon="volume-o" color="#ed6a0c" background="#fffbe8">
-            <van-swipe class="notice-swipe" horizontal :autoplay="3000" :show-indicators="false">
+        <van-notice-bar
+            v-if="noticeList.length"
+            class="home-notice"
+            left-icon="volume-o"
+            color="#ed6a0c"
+            background="#fffbe8"
+            :scrollable="false"
+        >
+            <van-swipe
+                class="notice-swipe"
+                vertical
+                :autoplay="3000"
+                :touchable="false"
+                :show-indicators="false"
+            >
                 <van-swipe-item v-for="notice in noticeList" :key="notice.id">
                     {{ notice.title }}
                 </van-swipe-item>

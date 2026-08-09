@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { searchProducts, getHotSearches } from '@/api/search'
 import { getSearchSuggestions, type AISource } from '@/ai/searchSuggestions'
@@ -31,6 +31,18 @@ const aiSource = ref<AISource>('fallback')//决定显示AI联想还是本地联�
 const aiSuggestions = ref<string[]>([])//AI联想结果
 let aiTimer: number | undefined//AI联想定时器
 
+// 有 AI 建议或思考中时隐藏热搜（课上约定）
+const showHotSearches = computed(() => {
+  return hotSearches.value.length > 0
+    && !aiLoading.value
+    && aiSuggestions.value.length === 0
+})
+
+const aiLabel = computed(() => {
+  if (aiLoading.value) return '思考中'
+  return aiSource.value === 'openai' ? 'AI' : '本地'
+})
+
 const saveHistory = (word: string) => {
   const oldHistory = history.value.filter((item) => item !== word)
   history.value = [word, ...oldHistory].slice(0, 10)
@@ -58,6 +70,9 @@ const doSearch = async (word = keyword.value) => {
   keyword.value = value
   loading.value = true
   hasSearched.value = true
+  window.clearTimeout(aiTimer)
+  aiSuggestions.value = []
+  aiLoading.value = false
 
   try {
     const res = await searchProducts({
@@ -150,7 +165,12 @@ onBeforeUnmount(() => {
     <van-loading v-if="loading" class="search-loading" vertical>搜索中...</van-loading>
 
     <template v-else-if="hasSearched">
-      <div v-if="products.length" class="result-list">
+      <van-list
+        v-if="products.length"
+        class="result-list"
+        :finished="true"
+        finished-text="没有更多了"
+      >
         <van-card
           v-for="item in products"
           :key="item.prodId"
@@ -160,7 +180,7 @@ onBeforeUnmount(() => {
           :thumb="item.pic"
           @click="goDetail(item.prodId)"
         />
-      </div>
+      </van-list>
       <van-empty v-else description="暂无搜索结果" />
     </template>
 
@@ -186,7 +206,7 @@ onBeforeUnmount(() => {
         <van-empty v-else image-size="80" description="暂无搜索历史" />
       </section>
 
-      <section v-if="hotSearches.length" class="panel">
+      <section v-if="showHotSearches" class="panel">
         <header class="panel-header">
           <div class="panel-title">
             <van-icon name="fire-o" />
@@ -213,19 +233,30 @@ onBeforeUnmount(() => {
           <div class="panel-title">
             <van-icon name="smile-o" />
             <h3>AI 搜索建议</h3>
-            <van-tag :type="aiSource === 'openai' ? 'primary' : 'success'" class="source-tag">
-              {{ aiSource === 'openai' ? 'AI' : '本地' }}
+            <van-tag
+              :type="aiLoading ? 'warning' : (aiSource === 'openai' ? 'primary' : 'success')"
+              class="source-tag"
+            >
+              {{ aiLabel }}
             </van-tag>
           </div>
         </header>
 
-        <van-loading v-if="aiLoading" size="20px">
-          思考中...
-        </van-loading>
+        <div v-if="aiLoading" class="ai-skeleton">
+          <span v-for="n in 5" :key="n" class="skeleton-block" />
+        </div>
 
         <div v-else-if="aiSuggestions.length" class="tag-list">
-          <van-tag v-for="item in aiSuggestions" :key="item" size="large" plain type="success" class="suggestion-item"
-            @click="doSearch(item)">
+          <van-tag
+            v-for="item in aiSuggestions"
+            :key="item"
+            size="large"
+            plain
+            :type="aiSource === 'openai' ? 'primary' : 'success'"
+            class="suggestion-item"
+            :class="{ 'ai-tag': aiSource === 'openai' }"
+            @click="doSearch(item)"
+          >
             {{ item }}
           </van-tag>
         </div>
@@ -329,5 +360,35 @@ onBeforeUnmount(() => {
 .suggestion-item {
   padding: 10px 18px;
   border-radius: 999px;
+}
+
+.ai-tag {
+  color: #7232dd;
+  border-color: #7232dd;
+}
+
+.ai-skeleton {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.skeleton-block {
+  display: inline-block;
+  width: 140px;
+  height: 52px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f2f3f5 25%, #e8e8e8 37%, #f2f3f5 63%);
+  background-size: 400% 100%;
+  animation: skeleton-shine 1.4s ease infinite;
+}
+
+@keyframes skeleton-shine {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
 }
 </style>

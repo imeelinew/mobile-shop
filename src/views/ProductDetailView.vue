@@ -46,10 +46,6 @@ const loadProductDetail = async () => {
     skuList.value = product.value.skuList || []
     //默认选中第一个规格
     selectedSku.value = skuList.value[0]
-    console.log(skuList.value, '产品规格列表')
-    console.log(selectedSku.value, '默认选中规格')
-    // console.log(productImages.value, 'product图片集')
-
     //获取收藏状态
     const collectionStatus = await getCollectionStatus(prodId)
     isCollected.value = collectionStatus.data
@@ -57,7 +53,7 @@ const loadProductDetail = async () => {
     const resComment = await getProductCommentData(prodId)
     commentData.value = resComment.data
   } catch (error) {
-    console.error('获取商品详情失败:', error)
+    Promise.reject(error)
   } finally {
     loading.value = false
   }
@@ -67,8 +63,6 @@ const loadProductDetail = async () => {
     aiSellingPoints.value = res.result
     aiLoading.value = false
   }
-  // console.log(product.value, '商品数据')
-  // console.log(aiSellingPoints.value, 'ai切分后的卖点4条数据')
 }
 
 //处理切换收藏状态
@@ -96,6 +90,7 @@ const handleSkuConfirm = (sku: any) => {
   selectedSku.value = sku
   isShowActionPanel.value = false
 }
+//处理加入购物车
 const handleAddCart = async () => {
   if (!product.value || !selectedSku.value) return
 
@@ -118,6 +113,8 @@ const handleAddCart = async () => {
     showFailToast('添加购物车失败')
   }
 }
+//
+//处理立即购买
 const handleBuyNow = () => {
   if (!product.value || !selectedSku.value) return
 
@@ -133,7 +130,7 @@ const handleBuyNow = () => {
     userChangeCoupon: 0,
     couponIds: [],
   }
-
+//为什么用 sessionStorage？因为数据量大，放 URL query 里太长了。
   sessionStorage.setItem('confirmOrder', JSON.stringify(orderParams))
   router.push('/order-confirm')
 }
