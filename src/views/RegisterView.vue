@@ -49,7 +49,7 @@ const passwordValidator = (value) => {
         <van-nav-bar title="注册" left-text="返回" left-arrow @click-left="goBack" />
 
         <div class="auth-hero">
-            <div class="brand">Mobile Shop</div>
+            <div class="brand">移动商城</div>
             <h1>创建账号</h1>
             <p>设置用户名和密码，开启购物</p>
         </div>

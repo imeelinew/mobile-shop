@@ -46,7 +46,7 @@ const passwordValidator = (value) => {
 <template>
     <div class="auth-page">
         <div class="auth-hero">
-            <div class="brand">Mobile Shop</div>
+            <div class="brand">移动商城</div>
             <h1>欢迎登录</h1>
             <p>登录后继续你的购物之旅</p>
         </div>
