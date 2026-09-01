@@ -237,3 +237,34 @@ app.use(createPinia())
 改动后：删除上述注册代码和依赖。
 
 解释：项目没有定义 Pinia Store，当前页面状态用 `ref`、`computed` 管理，因此移除未使用的全局状态依赖。
+
+## 分离部署恢复逻辑
+
+改动文件：`src/utils/deploymentRecovery.ts`、`src/router/index.ts`、`src/main.ts`
+
+改动前：
+
+```ts
+// src/main.ts
+window.addEventListener('vite:preloadError', ...)
+
+// src/router/index.ts
+router.onError(...)
+router.afterEach(...)
+```
+
+改动后：
+
+```ts
+// src/utils/deploymentRecovery.ts
+export const setupDeploymentRecovery = (router: Router) => {
+  window.addEventListener('vite:preloadError', ...)
+  router.onError(...)
+  router.afterEach(...)
+}
+
+// src/main.ts
+setupDeploymentRecovery(router)
+```
+
+解释：保留部署后旧 JS 分包失效时的刷新恢复功能，但将它从路由配置和应用入口中移到独立工具文件。

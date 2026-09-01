@@ -83,8 +83,6 @@ const router = createRouter({
 })
 
 const whiteList = ['/login', '/register']
-const staleModulePattern = /failed to fetch dynamically imported module|importing a module script failed|error loading dynamically imported module/i
-const recoveryKey = 'mobile-shop:route-recovery'
 
 router.beforeEach((to) => {
   if (!getToken() && !whiteList.includes(to.path)) {
@@ -93,25 +91,6 @@ router.beforeEach((to) => {
       query: { redirect: to.fullPath },
     }
   }
-})
-
-router.onError((error, to) => {
-  if (!staleModulePattern.test(String(error))) return
-
-  const target = to.fullPath || `${window.location.pathname}${window.location.search}${window.location.hash}`
-  if (sessionStorage.getItem(recoveryKey) === target) {
-    sessionStorage.removeItem(recoveryKey)
-    return
-  }
-
-  sessionStorage.setItem(recoveryKey, target)
-  const reloadUrl = new URL(target, window.location.origin)
-  reloadUrl.searchParams.set('_app_reload', Date.now().toString())
-  window.location.replace(reloadUrl)
-})
-
-router.afterEach(() => {
-  sessionStorage.removeItem(recoveryKey)
 })
 
 export default router
