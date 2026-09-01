@@ -192,3 +192,28 @@ const [res, collectionStatus, resComment] = await Promise.all([
 ```
 
 解释：三个请求都只依赖 `prodId`，使用 `Promise.all` 同时发起，页面无需依次等待每个请求。
+
+## 登录后返回原访问页面
+
+改动文件：`src/router/index.ts`、`src/views/LoginView.vue`
+
+改动前：
+
+```ts
+return '/login'
+await router.push('/home')
+```
+
+改动后：
+
+```ts
+return {
+  path: '/login',
+  query: { redirect: to.fullPath },
+}
+
+const redirect = route.query.redirect
+await router.replace(typeof redirect === 'string' ? redirect : '/home')
+```
+
+解释：路由守卫用 `redirect` 保存原地址，登录成功后返回该地址；没有原地址时进入首页。`replace` 会替换登录页记录，返回时不会再回到登录页。

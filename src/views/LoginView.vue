@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { loginApi } from "@/api/userInfo";
 import { encryptPassword } from "@/utils/encrypt";
 import { setToken } from "@/utils/token";
@@ -8,6 +8,7 @@ import { showFailToast, showSuccessToast } from "vant";
 import "vant/es/toast/style";
 
 const router = useRouter();
+const route = useRoute();
 const demoAccount = {
     username: "zhangsan123",
     password: "46584769479467",
@@ -56,7 +57,8 @@ const onSubmit = async (values) => {
         if (result.success && result.data?.accessToken) {
             setToken(result.data.accessToken);
             showSuccessToast("登录成功");
-            await router.push("/home");
+            const redirect = route.query.redirect;
+            await router.replace(typeof redirect === "string" ? redirect : "/home");
         } else {
             showFailToast(result.msg || "登录失败");
         }

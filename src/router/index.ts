@@ -88,7 +88,10 @@ const recoveryKey = 'mobile-shop:route-recovery'
 
 router.beforeEach((to) => {
   if (!getToken() && !whiteList.includes(to.path)) {
-    return '/login'
+    return {
+      path: '/login',
+      query: { redirect: to.fullPath },
+    }
   }
 })
 
