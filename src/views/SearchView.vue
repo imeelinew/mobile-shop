@@ -25,13 +25,14 @@ const fallbackHotSearches = [
   '新鲜水果',
   '蓝牙耳机'
 ]
+const AI_DEBOUNCE_DELAY = 300
 //搜索历史字段
 const history = ref<string[]>([])
 //AI 搜索联想字段
 const aiLoading = ref<boolean>(false)
 const aiSource = ref<AISource>('fallback')//决定显示AI联想还是本地联想
 const aiSuggestions = ref<string[]>([])//AI联想结果
-let aiTimer: number | undefined//AI联想定时器
+let suggestionTimer: number | undefined
 
 // 有 AI 建议或思考中时隐藏热搜（课上约定）
 const showHotSearches = computed(() => {
@@ -72,7 +73,7 @@ const doSearch = async (word = keyword.value) => {
   keyword.value = value
   loading.value = true
   hasSearched.value = true
-  window.clearTimeout(aiTimer)
+  window.clearTimeout(suggestionTimer)
   aiSuggestions.value = []
   aiLoading.value = false
 
@@ -100,28 +101,27 @@ const resetSearch = () => {
   products.value = []
   hasSearched.value = false
   loading.value = false
-  window.clearTimeout(aiTimer)
+  window.clearTimeout(suggestionTimer)
   aiSuggestions.value = []
   aiLoading.value = false
 }
 //AI联想输入处理 防抖处理
-const handleAIInput = (value: string) => {
-  window.clearTimeout(aiTimer)
-  const word = value.trim()
-  if (!word) {
+const handleSuggestionInput = (value: string) => {
+  window.clearTimeout(suggestionTimer)
+  const keyword = value.trim()
+  if (!keyword) {
     aiSuggestions.value = []
     aiLoading.value = false
     return
   }
   aiLoading.value = true
   aiSuggestions.value = []
-  aiTimer = window.setTimeout(async () => {
-    const { result, source } = await getSearchSuggestions(word)
+  suggestionTimer = window.setTimeout(async () => {
+    const { result, source } = await getSearchSuggestions(keyword)
     aiSuggestions.value = result
     aiSource.value = source
     aiLoading.value = false
-    console.log('AI联想', aiSuggestions.value, aiSource.value)
-  }, 300)
+  }, AI_DEBOUNCE_DELAY)
 }
 const loadHotSearches = async () => {
   try {
@@ -155,7 +155,7 @@ onMounted(() => {
   console.log('搜索历史', history.value)
 })
 onBeforeUnmount(() => {
-  window.clearTimeout(aiTimer)
+  window.clearTimeout(suggestionTimer)
 })
 </script>
 
@@ -164,7 +164,7 @@ onBeforeUnmount(() => {
     <van-nav-bar title="搜索" left-text="返回" left-arrow @click-left="router.back()" />
 
     <van-search v-model="keyword" placeholder="请输入搜索关键词" shape="round" show-action @cancel="resetSearch"
-      clearable @search="doSearch" @clear="resetSearch" @update:model-value="handleAIInput" />
+      clearable @search="doSearch" @clear="resetSearch" @update:model-value="handleSuggestionInput" />
 
     <ContentSkeleton v-if="loading" variant="list" :rows="4" />
 
