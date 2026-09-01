@@ -2,6 +2,7 @@ type AIRequestOptions = {
   timeout?: number
   maxTokens?: number
   temperature?: number
+  signal?: AbortSignal
 }
 
 export const isAvailable = () => true
@@ -16,6 +17,11 @@ export const requestAI = async (
 ) => {
   const controller = new AbortController()
   const timer = window.setTimeout(() => controller.abort(), options.timeout ?? 10_000)
+  const abortRequest = () => controller.abort()
+
+  // 外部取消和超时共用同一个控制器，调用方不需要处理两套逻辑
+  options.signal?.addEventListener('abort', abortRequest, { once: true })
+  if (options.signal?.aborted) controller.abort()
 
   try {
     const response = await fetch('/ai/chat', {
@@ -46,10 +52,12 @@ export const requestAI = async (
     return { text }
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
+      if (options.signal?.aborted) throw error
       throw new Error('AI 请求超时')
     }
     throw error
   } finally {
     window.clearTimeout(timer)
+    options.signal?.removeEventListener('abort', abortRequest)
   }
 }

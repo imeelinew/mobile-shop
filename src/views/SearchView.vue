@@ -25,7 +25,7 @@ const fallbackHotSearches = [
   '新鲜水果',
   '蓝牙耳机'
 ]
-const AI_DEBOUNCE_DELAY = 300
+const SUGGESTION_DEBOUNCE_DELAY = 300
 //搜索历史字段
 const history = ref<string[]>([])
 //AI 搜索联想字段
@@ -33,6 +33,16 @@ const aiLoading = ref<boolean>(false)
 const aiSource = ref<AISource>('fallback')//决定显示AI联想还是本地联想
 const aiSuggestions = ref<string[]>([])//AI联想结果
 let suggestionTimer: number | undefined
+let suggestionController: AbortController | undefined
+let suggestionRequestId = 0
+
+// 同时停止等待中的定时器和已经发出的旧请求
+const stopSuggestionRequest = () => {
+  window.clearTimeout(suggestionTimer)
+  suggestionController?.abort()
+  suggestionController = undefined
+  suggestionRequestId += 1
+}
 
 // 有 AI 建议或思考中时隐藏热搜（课上约定）
 const showHotSearches = computed(() => {
@@ -73,7 +83,7 @@ const doSearch = async (word = keyword.value) => {
   keyword.value = value
   loading.value = true
   hasSearched.value = true
-  window.clearTimeout(suggestionTimer)
+  stopSuggestionRequest()
   aiSuggestions.value = []
   aiLoading.value = false
 
@@ -101,13 +111,13 @@ const resetSearch = () => {
   products.value = []
   hasSearched.value = false
   loading.value = false
-  window.clearTimeout(suggestionTimer)
+  stopSuggestionRequest()
   aiSuggestions.value = []
   aiLoading.value = false
 }
 //AI联想输入处理 防抖处理
 const handleSuggestionInput = (value: string) => {
-  window.clearTimeout(suggestionTimer)
+  stopSuggestionRequest()
   const keyword = value.trim()
   if (!keyword) {
     aiSuggestions.value = []
@@ -116,12 +126,30 @@ const handleSuggestionInput = (value: string) => {
   }
   aiLoading.value = true
   aiSuggestions.value = []
+  const requestId = suggestionRequestId
+
   suggestionTimer = window.setTimeout(async () => {
-    const { result, source } = await getSearchSuggestions(keyword)
-    aiSuggestions.value = result
-    aiSource.value = source
-    aiLoading.value = false
-  }, AI_DEBOUNCE_DELAY)
+    const controller = new AbortController()
+    suggestionController = controller
+
+    try {
+      const { result, source } = await getSearchSuggestions(keyword, controller.signal)
+
+      // 只允许最后一次输入更新页面，避免旧结果覆盖新结果
+      if (requestId !== suggestionRequestId) return
+      aiSuggestions.value = result
+      aiSource.value = source
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        aiSuggestions.value = []
+      }
+    } finally {
+      if (requestId === suggestionRequestId) {
+        aiLoading.value = false
+        suggestionController = undefined
+      }
+    }
+  }, SUGGESTION_DEBOUNCE_DELAY)
 }
 const loadHotSearches = async () => {
   try {
@@ -155,7 +183,7 @@ onMounted(() => {
   console.log('搜索历史', history.value)
 })
 onBeforeUnmount(() => {
-  window.clearTimeout(suggestionTimer)
+  stopSuggestionRequest()
 })
 </script>
 
