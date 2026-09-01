@@ -43,7 +43,12 @@ const loadProductDetail = async () => {
   loading.value = true
 
   try {
-    const res = await getProductDetail(prodId)
+    const [res, collectionStatus, resComment] = await Promise.all([
+      getProductDetail(prodId),
+      getCollectionStatus(prodId),
+      getProductCommentData(prodId),
+    ])
+
     product.value = res.data
     productImages.value = product.value.imgs.split(',')
 
@@ -51,11 +56,7 @@ const loadProductDetail = async () => {
     skuList.value = product.value.skuList || []
     //默认选中第一个规格
     selectedSku.value = skuList.value[0]
-    //获取收藏状态
-    const collectionStatus = await getCollectionStatus(prodId)
     isCollected.value = collectionStatus.data
-    //获取评论数据
-    const resComment = await getProductCommentData(prodId)
     commentData.value = resComment.data
   } catch (error) {
     console.error('商品详情加载失败', error)

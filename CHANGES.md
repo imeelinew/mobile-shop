@@ -168,3 +168,27 @@ try {
 ```
 
 解释：请求失败时明确提示用户，`finally` 继续负责结束加载状态。
+
+## 商品详情并发请求
+
+改动文件：`src/views/ProductDetailView.vue`
+
+改动前：
+
+```ts
+const res = await getProductDetail(prodId)
+const collectionStatus = await getCollectionStatus(prodId)
+const resComment = await getProductCommentData(prodId)
+```
+
+改动后：
+
+```ts
+const [res, collectionStatus, resComment] = await Promise.all([
+  getProductDetail(prodId),
+  getCollectionStatus(prodId),
+  getProductCommentData(prodId),
+])
+```
+
+解释：三个请求都只依赖 `prodId`，使用 `Promise.all` 同时发起，页面无需依次等待每个请求。
