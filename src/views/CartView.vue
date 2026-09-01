@@ -6,6 +6,16 @@ import { showSuccessToast, showFailToast } from 'vant'
 import 'vant/es/toast/style'
 import { useRouter } from 'vue-router'
 import ContentSkeleton from '@/components/ContentSkeleton.vue'
+
+interface CartItem {
+    basketId: number
+    prodId: number
+    skuId: number
+    shopId: number
+    prodCount: number
+    checked: boolean
+}
+
 const router = useRouter()
 const loading = ref(true)
 const cartList = ref<any[]>([])
@@ -82,7 +92,7 @@ const loadCart = async () => {
     }
 }
 //切换商品数量
-const changeCartItemCount = async (item: any, count: number) => {
+const changeCartItemCount = async (item: CartItem, count: number) => {
     if (updatingBasketIds.value.has(item.basketId)) return
 
     updatingBasketIds.value.add(item.basketId)
@@ -112,7 +122,7 @@ const changeCartItemCount = async (item: any, count: number) => {
     }
 }
 //stepper
-const onStepperChange = (item: any, newCount: number) => {
+const onStepperChange = (item: CartItem, newCount: number) => {
     const delta = newCount - item.prodCount
     changeCartItemCount(item, delta)
 }

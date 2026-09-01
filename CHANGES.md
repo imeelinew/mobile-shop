@@ -83,3 +83,32 @@ const changeCartItemCount = async (item: any, count: number) => {
 ```
 
 解释：用 `Set` 记录正在更新的购物车项。请求完成前禁用对应步进器，避免同一商品产生并发请求。`finally` 保证请求成功或失败后都能解除禁用。
+
+## 购物车数量修改参数类型
+
+改动文件：`src/views/CartView.vue`
+
+改动前：
+
+```ts
+const changeCartItemCount = async (item: any, count: number) => {
+const onStepperChange = (item: any, newCount: number) => {
+```
+
+改动后：
+
+```ts
+interface CartItem {
+    basketId: number
+    prodId: number
+    skuId: number
+    shopId: number
+    prodCount: number
+    checked: boolean
+}
+
+const changeCartItemCount = async (item: CartItem, count: number) => {
+const onStepperChange = (item: CartItem, newCount: number) => {
+```
+
+解释：用 `CartItem` 代替数量修改函数的 `any`，字段名或类型写错时 TypeScript 会报错。
