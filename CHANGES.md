@@ -217,3 +217,23 @@ await router.replace(typeof redirect === 'string' ? redirect : '/home')
 ```
 
 解释：路由守卫用 `redirect` 保存原地址，登录成功后返回该地址；没有原地址时进入首页。`replace` 会替换登录页记录，返回时不会再回到登录页。
+
+## 移除未使用的 Pinia
+
+改动文件：`src/main.ts`、`package.json`、`package-lock.json`
+
+改动前：
+
+```ts
+import { createPinia } from 'pinia'
+
+app.use(createPinia())
+```
+
+```json
+"pinia": "^3.0.4"
+```
+
+改动后：删除上述注册代码和依赖。
+
+解释：项目没有定义 Pinia Store，当前页面状态用 `ref`、`computed` 管理，因此移除未使用的全局状态依赖。
