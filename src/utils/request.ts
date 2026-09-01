@@ -1,5 +1,29 @@
 import axios from 'axios'
-import { getToken } from '@/utils/token'
+import { getToken, removeToken } from '@/utils/token'
+
+const UNAUTHORIZED_CODE = 'A00004'
+let redirectingToLogin = false
+
+const handleUnauthorized = async () => {
+    removeToken()
+
+    if (redirectingToLogin || ['/login', '/register'].includes(window.location.pathname)) {
+        return
+    }
+
+    redirectingToLogin = true
+    const redirect = `${window.location.pathname}${window.location.search}${window.location.hash}`
+
+    try {
+        const { default: router } = await import('@/router')
+        await router.replace({
+            path: '/login',
+            query: { redirect },
+        })
+    } finally {
+        redirectingToLogin = false
+    }
+}
 
 const request = axios.create({
     baseURL: import.meta.env.VITE_APP_URL || '/api',
@@ -20,8 +44,17 @@ request.interceptors.request.use(config => {
 
 // 响应拦截器
 request.interceptors.response.use(response => {
+    if (response.data?.code === UNAUTHORIZED_CODE) {
+        void handleUnauthorized()
+        return Promise.reject(new Error(response.data.msg || '登录已失效'))
+    }
+
     return response.data
 }, error => {
+    if (error.response?.status === 401) {
+        void handleUnauthorized()
+    }
+
     return Promise.reject(error)
 })
 
