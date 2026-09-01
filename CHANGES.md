@@ -116,3 +116,27 @@ const onStepperChange = (item: CartItem, newCount: number) => {
 ```
 
 解释：购物车项类型单独放在 `types` 目录，页面通过 `import type` 引入。字段名或类型写错时 TypeScript 会报错。
+
+## 路由页面懒加载
+
+改动文件：`src/router/index.ts`
+
+改动前：
+
+```ts
+import HomeView from '@/views/HomeView.vue'
+import CartView from '@/views/CartView.vue'
+import MyOrderView from '@/views/MyOrderView.vue'
+```
+
+改动后：
+
+```ts
+const HomeView = () => import('@/views/HomeView.vue')
+const CartView = () => import('@/views/CartView.vue')
+const MyOrderView = () => import('@/views/MyOrderView.vue')
+```
+
+其他页面使用相同方式修改，`Layout` 保持同步加载。
+
+解释：进入路由时才加载对应页面，Vite 会把各页面拆分为独立文件，减少首次加载的 JavaScript。

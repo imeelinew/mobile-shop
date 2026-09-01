@@ -1,17 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { getToken } from '@/utils/token'
 import Layout from '@/components/Layout.vue'
-import AddressView from '@/views/AddressView.vue'
-import CartView from '@/views/CartView.vue'
-import CategoryView from '@/views/CategoryView.vue'
-import HomeView from '@/views/HomeView.vue'
-import LoginView from '@/views/LoginView.vue'
-import MineView from '@/views/MineView.vue'
-import MyOrderView from '@/views/MyOrderView.vue'
-import OrderConfirmView from '@/views/OrderConfirmView.vue'
-import ProductDetailView from '@/views/ProductDetailView.vue'
-import RegisterView from '@/views/RegisterView.vue'
-import SearchView from '@/views/SearchView.vue'
+
+const AddressView = () => import('@/views/AddressView.vue')
+const CartView = () => import('@/views/CartView.vue')
+const CategoryView = () => import('@/views/CategoryView.vue')
+const HomeView = () => import('@/views/HomeView.vue')
+const LoginView = () => import('@/views/LoginView.vue')
+const MineView = () => import('@/views/MineView.vue')
+const MyOrderView = () => import('@/views/MyOrderView.vue')
+const OrderConfirmView = () => import('@/views/OrderConfirmView.vue')
+const ProductDetailView = () => import('@/views/ProductDetailView.vue')
+const RegisterView = () => import('@/views/RegisterView.vue')
+const SearchView = () => import('@/views/SearchView.vue')
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
