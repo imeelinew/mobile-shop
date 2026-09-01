@@ -78,6 +78,8 @@ const loadCart = async () => {
         defaultAddress.value = addressList.find((item: any) => Number(item.commonAddr) === 1)
             || addressList[0]
             || null
+    } catch {
+        showFailToast('购物车加载失败')
     } finally {
         loading.value = false
     }

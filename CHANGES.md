@@ -140,3 +140,31 @@ const MyOrderView = () => import('@/views/MyOrderView.vue')
 其他页面使用相同方式修改，`Layout` 保持同步加载。
 
 解释：进入路由时才加载对应页面，Vite 会把各页面拆分为独立文件，减少首次加载的 JavaScript。
+
+## 购物车加载失败提示
+
+改动文件：`src/views/CartView.vue`
+
+改动前：
+
+```ts
+try {
+    // 加载购物车和地址
+} finally {
+    loading.value = false
+}
+```
+
+改动后：
+
+```ts
+try {
+    // 加载购物车和地址
+} catch {
+    showFailToast('购物车加载失败')
+} finally {
+    loading.value = false
+}
+```
+
+解释：请求失败时明确提示用户，`finally` 继续负责结束加载状态。
