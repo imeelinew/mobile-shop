@@ -10,6 +10,7 @@ const router = useRouter()
 const loading = ref(true)
 const cartList = ref<any[]>([])
 const defaultAddress = ref<any>(null)
+const updatingBasketIds = ref(new Set<number>())
 //总价
 const totalPrice = ref(0)
 
@@ -80,30 +81,35 @@ const loadCart = async () => {
         loading.value = false
     }
 }
-// TODO: 快速连续点击加减号会触发多个并发请求，响应顺序不保证，可能导致 totalPrice 显示错误（竞态问题）。
-// 修复思路：给每个 item 加一个 updating 状态，请求进行中禁用该项的 stepper，请求结束后再解除禁用。
 //切换商品数量
 const changeCartItemCount = async (item: any, count: number) => {
-    const res = await addCart({
-        basketId: item.basketId,
-        prodId: item.prodId,
-        skuId: item.skuId,
-        shopId: item.shopId,
-        count: count,
-    })
+    if (updatingBasketIds.value.has(item.basketId)) return
 
-    if (!res.success) {
-        showFailToast(res.msg || '修改数量失败')
-        return
-    }
+    updatingBasketIds.value.add(item.basketId)
+    try {
+        const res = await addCart({
+            basketId: item.basketId,
+            prodId: item.prodId,
+            skuId: item.skuId,
+            shopId: item.shopId,
+            count: count,
+        })
 
-    const nextCount = item.prodCount + count
-    if (nextCount > 0) {
-        item.prodCount = nextCount
-    } else if (nextCount <= 0) {
-        handleDeleteCartItem([item.basketId])
+        if (!res.success) {
+            showFailToast(res.msg || '修改数量失败')
+            return
+        }
+
+        const nextCount = item.prodCount + count
+        if (nextCount > 0) {
+            item.prodCount = nextCount
+        } else {
+            await handleDeleteCartItem([item.basketId])
+        }
+        await getTotalPrice()
+    } finally {
+        updatingBasketIds.value.delete(item.basketId)
     }
-    getTotalPrice()
 }
 //stepper
 const onStepperChange = (item: any, newCount: number) => {
@@ -170,6 +176,7 @@ onMounted(() => {
                                 :price="item.price">
                                 <template #num>
                                     <van-stepper :model-value="item.prodCount"
+                                        :disabled="updatingBasketIds.has(item.basketId)"
                                         @change="onStepperChange(item, $event)" />
                                 </template>
                             </van-card>
