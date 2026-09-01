@@ -83,3 +83,36 @@ const changeCartItemCount = async (item: any, count: number) => {
 ```
 
 解释：用 `Set` 记录正在更新的购物车项。请求完成前禁用对应步进器，避免同一商品产生并发请求。`finally` 保证请求成功或失败后都能解除禁用。
+
+## 购物车数量修改参数类型
+
+改动文件：`src/types/cart.ts`、`src/views/CartView.vue`
+
+改动前：
+
+```ts
+const changeCartItemCount = async (item: any, count: number) => {
+const onStepperChange = (item: any, newCount: number) => {
+```
+
+改动后：
+
+```ts
+// src/types/cart.ts
+export interface CartItem {
+    basketId: number
+    prodId: number
+    skuId: number
+    shopId: number
+    prodCount: number
+    checked: boolean
+}
+
+// src/views/CartView.vue
+import type { CartItem } from '@/types/cart'
+
+const changeCartItemCount = async (item: CartItem, count: number) => {
+const onStepperChange = (item: CartItem, newCount: number) => {
+```
+
+解释：购物车项类型单独放在 `types` 目录，页面通过 `import type` 引入。字段名或类型写错时 TypeScript 会报错。
