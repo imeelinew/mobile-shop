@@ -84,15 +84,6 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
             <van-icon name="arrow" />
           </button>
         </section>
-
-        <section class="benefit-panel">
-          <h2>你只管说需求</h2>
-          <div class="benefit-list">
-            <div><strong>01</strong><span>说清预算和使用场景</span></div>
-            <div><strong>02</strong><span>快速缩小选择范围</span></div>
-            <div><strong>03</strong><span>看懂每件商品为什么适合</span></div>
-          </div>
-        </section>
       </div>
 
       <section v-else key="results" class="result-area">
@@ -216,7 +207,6 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
 }
 
 .example-panel,
-.benefit-panel,
 .guide-loading,
 .recommend-card {
   background: var(--shop-card);
@@ -257,6 +247,11 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
       color: var(--shop-text-secondary);
     }
 
+    > span {
+      min-width: 0;
+      flex: 1;
+    }
+
     .example-icon {
       display: grid;
       width: 52px;
@@ -272,45 +267,6 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
 
 .starter-content {
   animation: rise-in 0.45s 0.18s both;
-}
-
-.benefit-panel {
-  margin: 0 20px 24px;
-  padding: 26px 24px;
-  border: 1px solid var(--shop-border);
-
-  h2 {
-    margin: 0 0 18px;
-    font-size: 29px;
-  }
-}
-
-.benefit-list {
-  display: grid;
-  gap: 12px;
-
-  div {
-    display: grid;
-    grid-template-columns: 58px 1fr;
-    align-items: center;
-    min-height: 64px;
-    border-bottom: 1px solid var(--shop-border);
-
-    &:last-child {
-      border-bottom: 0;
-    }
-  }
-
-  strong {
-    color: var(--shop-primary);
-    font-size: 21px;
-    font-weight: 700;
-  }
-
-  span {
-    color: var(--shop-text);
-    font-size: 23px;
-  }
 }
 
 .guide-loading {
