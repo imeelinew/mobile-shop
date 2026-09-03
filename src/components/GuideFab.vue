@@ -6,7 +6,6 @@ const router = useRouter()
 
 <template>
   <div class="guide-fab-wrap">
-    <span class="guide-fab-pulse" aria-hidden="true" />
     <van-button
       class="guide-fab"
       round
@@ -28,27 +27,17 @@ const router = useRouter()
   z-index: 20;
   right: 24px;
   bottom: calc(116px + env(safe-area-inset-bottom));
-  width: 108px;
-  height: 108px;
-  animation: float 3s ease-in-out infinite;
-}
-
-.guide-fab-pulse {
-  position: absolute;
-  inset: 4px;
-  border-radius: 50%;
-  background: var(--shop-primary-soft);
-  animation: pulse 2.4s ease-out infinite;
+  width: 96px;
+  height: 96px;
 }
 
 .guide-fab {
-  width: 108px;
-  height: 108px;
+  width: 96px;
+  height: 96px;
   padding: 0;
-  border: 6px solid rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: 50%;
-  background: linear-gradient(145deg, #ff334b, var(--shop-primary));
-  box-shadow: 0 12px 30px rgba(238, 10, 36, 0.28);
+  background: var(--shop-primary);
 }
 
 .guide-fab-content {
@@ -58,30 +47,13 @@ const router = useRouter()
   gap: 3px;
 
   .van-icon {
-    font-size: 34px;
+    font-size: 30px;
   }
 
   span {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     line-height: 1.1;
-  }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
-
-@keyframes pulse {
-  0% { opacity: 0.65; transform: scale(0.88); }
-  75%, 100% { opacity: 0; transform: scale(1.35); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .guide-fab-wrap,
-  .guide-fab-pulse {
-    animation: none;
   }
 }
 </style>
