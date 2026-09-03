@@ -12,9 +12,9 @@ const loading = ref(false)
 const result = ref<GuideResult | null>(null)
 
 const examples = [
-  '800 元以内，想买通勤用的降噪耳机，续航要好',
-  '想买双透气、防滑的跑鞋，预算 600 元',
-  '敏感肌换季干燥，300 元内怎么选',
+  { icon: 'service-o', text: '800 元以内，想买通勤用的降噪耳机，续航要好' },
+  { icon: 'fire-o', text: '想买双透气、防滑的跑鞋，预算 600 元' },
+  { icon: 'flower-o', text: '敏感肌换季干燥，300 元内怎么选' },
 ]
 
 const submit = async (text = query.value) => {
@@ -45,21 +45,25 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
     <van-nav-bar title="轻购AI" left-text="返回" left-arrow @click-left="router.back()" />
 
     <section class="guide-hero">
-      <h1>告诉我你想买什么</h1>
+      <div class="hero-mark"><van-icon name="chat-o" /></div>
+      <h1>想买什么，问轻购AI</h1>
+      <p>把预算和需求告诉我，少做功课，更快买对。</p>
 
-      <van-field
-        v-model="query"
-        class="guide-input"
-        type="textarea"
-        rows="3"
-        maxlength="200"
-        autosize
-        placeholder="比如：800 元以内，想买通勤用的降噪耳机，续航要好"
-        @keydown.enter.exact.prevent="submit()"
-      />
-      <van-button block type="danger" :loading="loading" loading-text="正在挑选…" @click="submit()">
-        开始挑选
-      </van-button>
+      <div class="compose-card">
+        <van-field
+          v-model="query"
+          class="guide-input"
+          type="textarea"
+          rows="3"
+          maxlength="200"
+          autosize
+          placeholder="比如：800 元以内，想买通勤用的降噪耳机，续航要好"
+          @keydown.enter.exact.prevent="submit()"
+        />
+        <van-button block type="danger" :loading="loading" loading-text="正在挑选…" @click="submit()">
+          帮我挑选
+        </van-button>
+      </div>
     </section>
 
     <Transition name="content" mode="out-in">
@@ -72,12 +76,25 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
         <div class="loading-track"><i /></div>
       </section>
 
-      <section v-else-if="!result" key="examples" class="example-panel">
-        <h2>不知道怎么说？</h2>
-        <button v-for="item in examples" :key="item" type="button" @click="submit(item)">
-          <span>{{ item }}</span><van-icon name="arrow" />
-        </button>
-      </section>
+      <div v-else-if="!result" key="examples" class="starter-content">
+        <section class="example-panel">
+          <h2>可以这样问</h2>
+          <button v-for="item in examples" :key="item.text" type="button" @click="submit(item.text)">
+            <van-icon class="example-icon" :name="item.icon" />
+            <span>{{ item.text }}</span>
+            <van-icon name="arrow" />
+          </button>
+        </section>
+
+        <section class="benefit-panel">
+          <h2>你只管说需求</h2>
+          <div class="benefit-list">
+            <div><strong>01</strong><span>说清预算和使用场景</span></div>
+            <div><strong>02</strong><span>快速缩小选择范围</span></div>
+            <div><strong>03</strong><span>看懂每件商品为什么适合</span></div>
+          </div>
+        </section>
+      </div>
 
       <section v-else key="results" class="result-area">
         <van-notice-bar
@@ -135,51 +152,64 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
 .guide-page {
   min-height: 100vh;
   padding-bottom: calc(40px + env(safe-area-inset-bottom));
-  background: var(--shop-bg);
+  background:
+    radial-gradient(circle at 100% 18%, rgba(238, 10, 36, 0.09), transparent 32%),
+    radial-gradient(circle at 0 88%, rgba(255, 173, 94, 0.1), transparent 30%),
+    linear-gradient(180deg, #fff 0%, #fff7f8 38%, var(--shop-bg) 100%);
 }
 
 .guide-hero {
   position: relative;
-  overflow: hidden;
-  padding: 42px 28px 34px;
-  background:
-    radial-gradient(circle at 92% 0, rgba(255, 255, 255, 0.34), transparent 28%),
-    linear-gradient(150deg, #ff4055 0%, var(--shop-primary) 62%, #cf0018 100%);
-  box-shadow: 0 14px 32px rgba(238, 10, 36, 0.14);
+  padding: 38px 28px 12px;
 
-  &::after {
-    position: absolute;
-    right: -76px;
-    bottom: -100px;
-    width: 250px;
-    height: 250px;
-    border: 34px solid rgba(255, 255, 255, 0.08);
-    border-radius: 50%;
-    content: '';
-  }
-
+  .hero-mark,
   h1,
-  .guide-input,
-  :deep(.van-button) {
-    position: relative;
-    z-index: 1;
+  > p,
+  .compose-card {
     animation: rise-in 0.5s both;
   }
 
-  h1 {
-    margin: 0 0 28px;
+  .hero-mark {
+    display: grid;
+    width: 68px;
+    height: 68px;
+    margin-bottom: 22px;
+    place-items: center;
+    border-radius: 20px;
+    background: linear-gradient(145deg, #ff4055, var(--shop-primary));
     color: #fff;
+    font-size: 34px;
+  }
+
+  h1 {
+    margin: 0;
+    color: var(--shop-text);
     font-size: 44px;
     line-height: 1.3;
   }
 
+  > p {
+    margin: 14px 0 28px;
+    color: #6d6e72;
+    font-size: 24px;
+    line-height: 1.5;
+    animation-delay: 80ms;
+  }
+
+  .compose-card {
+    padding: 18px;
+    border: 1px solid rgba(238, 10, 36, 0.12);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.9);
+    animation-delay: 140ms;
+  }
+
   .guide-input {
-    margin-bottom: 18px;
+    margin-bottom: 16px;
     overflow: hidden;
     border-radius: var(--shop-radius);
+    background: #f7f8fa;
     color: var(--shop-text);
-    box-shadow: 0 10px 28px rgba(139, 0, 16, 0.12);
-    animation-delay: 80ms;
   }
 
   :deep(.van-field__control) {
@@ -192,15 +222,15 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
     height: 84px;
     border: 0;
     border-radius: var(--shop-radius-sm);
-    background: #fff;
-    color: var(--shop-primary);
+    background: var(--shop-primary);
+    color: #fff;
     font-size: 27px;
     font-weight: 700;
-    animation-delay: 150ms;
   }
 }
 
 .example-panel,
+.benefit-panel,
 .guide-loading,
 .recommend-card {
   background: var(--shop-card);
@@ -210,10 +240,10 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
 .example-panel {
   margin: 20px;
   padding: 24px;
-  animation: rise-in 0.45s 0.15s both;
+  border: 1px solid var(--shop-border);
 
   h2 {
-    margin: 0 0 8px;
+    margin: 0 0 10px;
     font-size: 29px;
   }
 
@@ -223,7 +253,7 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 23px 0;
+    padding: 20px 0;
     border: 0;
     border-bottom: 1px solid var(--shop-border);
     background: none;
@@ -240,6 +270,60 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
       flex: 0 0 auto;
       color: var(--shop-text-secondary);
     }
+
+    .example-icon {
+      display: grid;
+      width: 52px;
+      height: 52px;
+      place-items: center;
+      border-radius: 14px;
+      background: var(--shop-primary-soft);
+      color: var(--shop-primary);
+      font-size: 27px;
+    }
+  }
+}
+
+.starter-content {
+  animation: rise-in 0.45s 0.18s both;
+}
+
+.benefit-panel {
+  margin: 0 20px 24px;
+  padding: 26px 24px;
+  border: 1px solid var(--shop-border);
+
+  h2 {
+    margin: 0 0 18px;
+    font-size: 29px;
+  }
+}
+
+.benefit-list {
+  display: grid;
+  gap: 12px;
+
+  div {
+    display: grid;
+    grid-template-columns: 58px 1fr;
+    align-items: center;
+    min-height: 64px;
+    border-bottom: 1px solid var(--shop-border);
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  strong {
+    color: var(--shop-primary);
+    font-size: 21px;
+    font-weight: 700;
+  }
+
+  span {
+    color: var(--shop-text);
+    font-size: 23px;
   }
 }
 
@@ -472,6 +556,9 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
 
 @media (prefers-reduced-motion: reduce) {
   .guide-hero h1,
+  .guide-hero .hero-mark,
+  .guide-hero > p,
+  .guide-hero .compose-card,
   .guide-hero .guide-input,
   .guide-hero :deep(.van-button),
   .example-panel,
