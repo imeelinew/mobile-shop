@@ -8,10 +8,6 @@ import "vant/es/toast/style";
 
 const router = useRouter();
 const route = useRoute();
-const demoAccount = {
-    username: "zhangsan123",
-    password: "46584769479467",
-} as const;
 
 const goRegister = () => {
     router.push("/register");
@@ -20,29 +16,6 @@ const goRegister = () => {
 const username = ref("");
 const password = ref("");
 const submitting = ref(false);
-
-const copyCredential = async (label: string, value: string) => {
-    try {
-        await navigator.clipboard.writeText(value);
-    } catch {
-        const input = document.createElement("textarea");
-        input.value = value;
-        input.style.position = "fixed";
-        input.style.opacity = "0";
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand("copy");
-        input.remove();
-    }
-
-    showSuccessToast(`${label}已复制`);
-};
-
-const fillDemoAccount = () => {
-    username.value = demoAccount.username;
-    password.value = demoAccount.password;
-    showSuccessToast("演示账号已填入");
-};
 
 const onSubmit = async (values) => {
     if (submitting.value) return;
@@ -84,49 +57,6 @@ const passwordValidator = (value) => {
             <h1>欢迎登录</h1>
             <p>登录后继续你的购物之旅</p>
         </div>
-
-        <section class="demo-account" aria-labelledby="demo-account-title">
-            <div class="demo-account-heading">
-                <van-icon name="contact-o" aria-hidden="true" />
-                <h2 id="demo-account-title">演示账号</h2>
-            </div>
-            <dl>
-                <div>
-                    <dt>账号</dt>
-                    <dd>{{ demoAccount.username }}</dd>
-                    <button
-                        type="button"
-                        class="credential-copy"
-                        aria-label="复制账号"
-                        @click="copyCredential('账号', demoAccount.username)"
-                    >
-                        <van-icon name="description-o" aria-hidden="true" />
-                        <span>复制</span>
-                    </button>
-                </div>
-                <div>
-                    <dt>密码</dt>
-                    <dd>{{ demoAccount.password }}</dd>
-                    <button
-                        type="button"
-                        class="credential-copy"
-                        aria-label="复制密码"
-                        @click="copyCredential('密码', demoAccount.password)"
-                    >
-                        <van-icon name="description-o" aria-hidden="true" />
-                        <span>复制</span>
-                    </button>
-                </div>
-            </dl>
-            <button
-                type="button"
-                class="fill-demo-account"
-                @click="fillDemoAccount"
-            >
-                <van-icon name="edit" aria-hidden="true" />
-                <span>一键填入登录信息</span>
-            </button>
-        </section>
 
         <van-form class="auth-form" @submit="onSubmit">
             <van-cell-group inset>
@@ -234,106 +164,6 @@ const passwordValidator = (value) => {
     }
 }
 
-.demo-account {
-    margin: 0 0 28px;
-    padding: 24px;
-    border: 1px solid rgba(238, 10, 36, 0.12);
-    border-radius: var(--shop-radius);
-    background: var(--shop-card);
-    box-shadow: 0 8px 24px rgba(50, 50, 51, 0.04);
-
-    dl {
-        margin: 18px 0 0;
-        display: grid;
-        gap: 12px;
-    }
-
-    dl > div {
-        min-width: 0;
-        padding: 14px 16px;
-        display: grid;
-        grid-template-columns: 72px minmax(0, 1fr) auto;
-        gap: 10px;
-        align-items: center;
-        border-radius: var(--shop-radius-sm);
-        background: var(--shop-bg);
-    }
-
-    dt {
-        color: var(--shop-text-secondary);
-        font-size: 22px;
-    }
-
-    dd {
-        margin: 0;
-        color: var(--shop-text);
-        font-family:
-            ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        font-size: 24px;
-        font-weight: 600;
-        overflow-wrap: anywhere;
-        user-select: text;
-        -webkit-user-select: text;
-    }
-}
-
-.credential-copy,
-.fill-demo-account {
-    border: 0;
-    font: inherit;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.credential-copy {
-    padding: 8px 10px;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    border-radius: 999px;
-    background: var(--shop-card);
-    color: var(--shop-primary);
-    font-size: 20px;
-}
-
-.fill-demo-account {
-    width: 100%;
-    margin-top: 16px;
-    padding: 14px 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    border-radius: var(--shop-radius-sm);
-    background: var(--shop-primary-soft);
-    color: var(--shop-primary);
-    font-size: 22px;
-    font-weight: 600;
-}
-
-.credential-copy:focus-visible,
-.fill-demo-account:focus-visible {
-    outline: 2px solid var(--shop-primary);
-    outline-offset: 2px;
-}
-
-.demo-account-heading {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--shop-primary);
-
-    :deep(.van-icon) {
-        font-size: 30px;
-    }
-
-    h2 {
-        margin: 0;
-        color: var(--shop-text);
-        font-size: 28px;
-        font-weight: 650;
-    }
-}
 
 .submit-box {
     margin: 32px 0 20px;
