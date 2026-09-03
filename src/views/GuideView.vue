@@ -20,7 +20,7 @@ const examples = [
 const submit = async (text = query.value) => {
   const value = text.trim()
   if (value.length < 2) {
-    showToast('告诉我预算、用途或偏好就可以')
+    showToast('输入框不能为空')
     return
   }
   query.value = value
@@ -46,7 +46,7 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
 
     <section class="guide-hero">
       <h1>想买什么，问轻购AI</h1>
-      <p>把预算和需求告诉我，少做功课，更快买对。</p>
+      <p>用平实的语言告诉 轻购AI 你想买什么？</p>
 
       <div class="compose-card">
         <van-field
