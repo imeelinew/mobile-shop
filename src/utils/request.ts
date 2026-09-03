@@ -26,7 +26,7 @@ const handleUnauthorized = async () => {
 }
 
 const request = axios.create({
-    baseURL: import.meta.env.VITE_APP_URL || '/api',
+    baseURL: import.meta.env.VITE_APP_URL || 'https://api-qg.107.173.35.208.nip.io',
     timeout: 5000,
 })
 // 请求拦截器
@@ -34,7 +34,7 @@ request.interceptors.request.use(config => {
     const token = getToken()
 
     if (token) {
-        config.headers.Authorization = token
+        config.headers.Authorization = `Bearer ${token}`
     }
 
     return config

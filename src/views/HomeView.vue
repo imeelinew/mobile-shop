@@ -59,7 +59,7 @@ onMounted(() => {
 })
 
 const navItems = [
-    { text: '新品推荐', icon: 'new-o', path: '/category' },
+    { text: 'AI智能导购', icon: 'smile-comment-o', path: '/guide' },
     { text: '限时特惠', icon: 'clock-o', path: '/category' },
     { text: '每日疯抢', icon: 'fire-o', path: '/category' },
     { text: '领优惠券', icon: 'coupon-o', path: '/mine' },

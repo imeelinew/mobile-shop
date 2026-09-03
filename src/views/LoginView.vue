@@ -2,7 +2,6 @@
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { loginApi } from "@/api/userInfo";
-import { encryptPassword } from "@/utils/encrypt";
 import { setToken } from "@/utils/token";
 import { showFailToast, showSuccessToast } from "vant";
 import "vant/es/toast/style";
@@ -51,7 +50,7 @@ const onSubmit = async (values) => {
     try {
         const result = await loginApi({
             userName: values.username,
-            passWord: encryptPassword(values.password),
+            passWord: values.password,
         });
 
         if (result.success && result.data?.accessToken) {

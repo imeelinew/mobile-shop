@@ -13,6 +13,7 @@ const OrderConfirmView = () => import('@/views/OrderConfirmView.vue')
 const ProductDetailView = () => import('@/views/ProductDetailView.vue')
 const RegisterView = () => import('@/views/RegisterView.vue')
 const SearchView = () => import('@/views/SearchView.vue')
+const GuideView = () => import('@/views/GuideView.vue')
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -31,6 +32,11 @@ const router = createRouter({
       path: '/search',
       name: 'search',
       component: SearchView,
+    },
+    {
+      path: '/guide',
+      name: 'guide',
+      component: GuideView,
     },
     {
       path: '/product-detail',
@@ -82,7 +88,7 @@ const router = createRouter({
   ]
 })
 
-const whiteList = ['/login', '/register']
+const whiteList = ['/login', '/register', '/guide']
 
 router.beforeEach((to) => {
   if (!getToken() && !whiteList.includes(to.path)) {

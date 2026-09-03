@@ -2,7 +2,6 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { registerApi } from '@/api/userInfo'
-import { encryptPassword } from '@/utils/encrypt'
 import { showSuccessToast, showFailToast } from 'vant'
 
 // 群里发的函数组件样式
@@ -18,7 +17,7 @@ const onRegister = async (values) => {
     try {
         const result = await registerApi({
             userName: values.username,
-            passWord: encryptPassword(values.password),
+            passWord: values.password,
         })
 
         if (result.success) {

@@ -59,7 +59,11 @@ const handleSubmitOrder = async () => {
             shopId: shop.shopId,
             remarks: shop.remarks || '',
         }))
-        const res = await submitOrder({ orderShopParams })
+        const res = await submitOrder({
+            orderShopParams,
+            checkoutItems: confirmData.value.checkoutItems,
+            addrId: defaultAddress.value.addrId,
+        })
 
         if (res.success) {
             const orderNumbers = res.data?.orderNumbers || res.data?.orderNumber

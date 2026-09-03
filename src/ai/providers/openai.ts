@@ -24,7 +24,8 @@ export const requestAI = async (
   if (options.signal?.aborted) controller.abort()
 
   try {
-    const response = await fetch('/ai/chat', {
+    const apiBaseUrl = import.meta.env.VITE_APP_URL || 'https://api-qg.107.173.35.208.nip.io'
+    const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/ai/chat`, {
       method: 'POST',
       signal: controller.signal,
       headers: {
