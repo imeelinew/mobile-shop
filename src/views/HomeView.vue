@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { getBannerList, getNoticeList, getProductGroups } from '@/api/home'
 import type { Banner, Notice, Product, ProductGroup } from '@/types/home'
 import ContentSkeleton from '@/components/ContentSkeleton.vue'
+import GuideFab from '@/components/GuideFab.vue'
 
 const router = useRouter()
 const keyword = ref<string>('')
@@ -59,7 +60,6 @@ onMounted(() => {
 })
 
 const navItems = [
-    { text: 'AI智能导购', icon: 'smile-comment-o', path: '/guide' },
     { text: '限时特惠', icon: 'clock-o', path: '/category' },
     { text: '每日疯抢', icon: 'fire-o', path: '/category' },
     { text: '领优惠券', icon: 'coupon-o', path: '/mine' },
@@ -90,7 +90,7 @@ const navItems = [
                 />
             </van-swipe-item>
         </van-swipe>
-        <van-grid class="nav-grid" :border="false" :column-num="4">
+        <van-grid class="nav-grid" :border="false" :column-num="3">
             <van-grid-item
                 v-for="item in navItems"
                 :key="item.text"
@@ -143,6 +143,7 @@ const navItems = [
             </div>
         </section>
         </template>
+        <GuideFab />
     </div>
 </template>
 <style lang="scss" scoped>

@@ -1,73 +1,40 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast, showToast } from 'vant'
 import 'vant/es/toast/style'
 import { getGuideRecommendations } from '@/api/guide'
-import type { GuideRecommendation, GuideResult } from '@/types/guide'
+import type { GuideResult } from '@/types/guide'
 
 const router = useRouter()
 const query = ref('')
 const loading = ref(false)
 const result = ref<GuideResult | null>(null)
-const comparedIds = ref<number[]>([])
-const showCompare = ref(false)
 
 const examples = [
-  '预算2500元，想买适合拍短视频而且便携的设备',
-  '800元以内，想要透气、防滑、支撑好的徒步装备',
-  '敏感肌换季干燥，预算300元以内怎么选',
+  '800 元以内，想买通勤用的降噪耳机，续航要好',
+  '想买双透气、防滑的跑鞋，预算 600 元',
+  '敏感肌换季干燥，300 元内怎么选',
 ]
-
-const intentTags = computed(() => {
-  if (!result.value) return []
-  const intent = result.value.intent
-  return [
-    ...(intent.category ? [intent.category] : []),
-    ...(intent.budgetMax ? [`预算 ≤ ¥${intent.budgetMax}`] : []),
-    ...intent.requirements,
-  ]
-})
-
-const comparedProducts = computed(() => result.value?.recommendations
-  .filter((item) => comparedIds.value.includes(item.product.prodId)) ?? [])
-
-const compareKeys = computed(() => Array.from(new Set(
-  comparedProducts.value.flatMap((item) => Object.keys(item.product.attributes || {})),
-)).slice(0, 8))
 
 const submit = async (text = query.value) => {
   const value = text.trim()
   if (value.length < 2) {
-    showToast('请描述一下预算和使用需求')
+    showToast('告诉我预算、用途或偏好就可以')
     return
   }
   query.value = value
   loading.value = true
   result.value = null
-  comparedIds.value = []
   try {
     const response = await getGuideRecommendations(value)
-    if (!response.success) throw new Error(response.msg || '推荐失败')
+    if (!response.success) throw new Error(response.msg || '挑选失败')
     result.value = response.data
   } catch (error) {
-    showFailToast(error instanceof Error ? error.message : '智能导购暂时不可用')
+    showFailToast(error instanceof Error ? error.message : '轻购AI暂时开小差了')
   } finally {
     loading.value = false
   }
-}
-
-const toggleCompare = (item: GuideRecommendation) => {
-  const id = item.product.prodId
-  if (comparedIds.value.includes(id)) {
-    comparedIds.value = comparedIds.value.filter((value) => value !== id)
-    return
-  }
-  if (comparedIds.value.length >= 3) {
-    showToast('最多同时对比 3 件商品')
-    return
-  }
-  comparedIds.value = [...comparedIds.value, id]
 }
 
 const goDetail = (prodId: number) => router.push({ path: '/product-detail', query: { prodId } })
@@ -75,12 +42,10 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
 
 <template>
   <div class="guide-page">
-    <van-nav-bar title="AI 智能导购" left-text="返回" left-arrow @click-left="router.back()" />
+    <van-nav-bar title="轻购AI" left-text="返回" left-arrow @click-left="router.back()" />
 
     <section class="guide-hero">
-      <div class="hero-badge"><van-icon name="smile-comment-o" /> 场景化选购</div>
-      <h1>不用研究参数，<br>说出你真正需要什么</h1>
-      <p>AI 理解需求，程序基于真实商品数据筛选并说明推荐依据。</p>
+      <h1>告诉我你想买什么</h1>
 
       <van-field
         v-model="query"
@@ -89,138 +54,433 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
         rows="3"
         maxlength="200"
         autosize
-        show-word-limit
-        placeholder="例如：预算 2500 元，想买适合旅行拍视频、轻便防抖的设备"
+        placeholder="比如：800 元以内，想买通勤用的降噪耳机，续航要好"
+        @keydown.enter.exact.prevent="submit()"
       />
-      <van-button block round type="danger" :loading="loading" loading-text="正在理解需求…" @click="submit()">
-        帮我挑选
+      <van-button block type="danger" :loading="loading" loading-text="正在挑选…" @click="submit()">
+        开始挑选
       </van-button>
     </section>
 
-    <section v-if="!result && !loading" class="example-panel">
-      <h2>试试这样问</h2>
-      <button v-for="item in examples" :key="item" type="button" @click="submit(item)">
-        <span>{{ item }}</span><van-icon name="arrow" />
-      </button>
-    </section>
-
-    <div v-if="loading" class="guide-loading">
-      <div class="thinking-line"><span />正在拆解预算、场景和偏好</div>
-      <div class="thinking-line"><span />正在匹配真实商品信息</div>
-      <div class="thinking-line"><span />正在整理推荐依据</div>
-    </div>
-
-    <template v-if="result">
-      <section class="intent-panel">
-        <header>
-          <h2>我理解你的需求是</h2>
-          <van-tag :type="result.source === 'ai' ? 'primary' : 'success'">
-            {{ result.source === 'ai' ? 'AI 解析' : '规则降级' }}
-          </van-tag>
-        </header>
-        <div class="intent-tags">
-          <van-tag v-for="tag in intentTags" :key="tag" plain type="primary" size="large">{{ tag }}</van-tag>
+    <Transition name="content" mode="out-in">
+      <section v-if="loading" key="loading" class="guide-loading">
+        <div class="loading-orbit">
+          <van-icon name="search" />
         </div>
-        <p v-for="message in result.relaxedConstraints" :key="message" class="relaxed-tip">
-          <van-icon name="info-o" />{{ message }}
-        </p>
+        <strong>正在为你挑选</strong>
+        <span>比较需求与商品，马上就好</span>
+        <div class="loading-track"><i /></div>
       </section>
 
-      <section class="recommend-section">
-        <div class="section-title">
-          <div><small>基于真实商品字段</small><h2>为你推荐</h2></div>
-          <span>{{ result.recommendations.length }} 个结果</span>
-        </div>
+      <section v-else-if="!result" key="examples" class="example-panel">
+        <h2>不知道怎么说？</h2>
+        <button v-for="item in examples" :key="item" type="button" @click="submit(item)">
+          <span>{{ item }}</span><van-icon name="arrow" />
+        </button>
+      </section>
 
-        <article v-for="(item, index) in result.recommendations" :key="item.product.prodId" class="recommend-card">
-          <div class="rank">{{ index + 1 }}</div>
+      <section v-else key="results" class="result-area">
+        <van-notice-bar
+          v-for="message in result.relaxedConstraints"
+          :key="message"
+          class="relaxed-tip"
+          left-icon="info-o"
+          :text="message"
+          wrapable
+          :scrollable="false"
+        />
+
+        <header class="section-title">
+          <h2>为你挑好了</h2>
+          <span>{{ result.recommendations.length }} 件</span>
+        </header>
+
+        <article
+          v-for="(item, index) in result.recommendations"
+          :key="item.product.prodId"
+          class="recommend-card"
+          :style="{ animationDelay: `${index * 80}ms` }"
+        >
           <div class="product-main" @click="goDetail(item.product.prodId)">
-            <img :src="item.product.pic" :alt="item.product.prodName">
+            <div class="product-image-wrap">
+              <img :src="item.product.pic" :alt="item.product.prodName">
+              <span>{{ index + 1 }}</span>
+            </div>
             <div class="product-copy">
               <h3>{{ item.product.prodName }}</h3>
-              <p>{{ item.product.brief }}</p>
-              <strong>¥{{ item.product.price }}</strong>
+              <strong><small>¥</small>{{ item.product.price }}</strong>
             </div>
           </div>
 
-          <div class="match-list">
-            <div v-for="matched in item.matched" :key="matched" class="match-item">
-              <van-icon name="passed" />{{ matched }}
-            </div>
-            <div v-for="unmatched in item.unmatched" :key="unmatched" class="unmatch-item">
-              <van-icon name="warning-o" />未找到“{{ unmatched }}”的明确依据
+          <div v-if="item.matched.length" class="match-list">
+            <div v-for="matched in item.matched.slice(0, 3)" :key="matched">
+              <van-icon name="success" />{{ matched }}
             </div>
           </div>
 
-          <details v-if="item.evidence.length" class="evidence">
-            <summary>查看推荐依据</summary>
-            <p v-for="line in item.evidence" :key="line.requirement">
-              <strong>{{ line.requirement }}</strong>{{ line.source }}
-            </p>
-          </details>
+          <p v-if="item.unmatched.length" class="uncertain">
+            <van-icon name="info-o" />{{ item.unmatched.slice(0, 2).join('、') }}暂未找到明确说明
+          </p>
 
-          <div class="card-actions">
-            <van-button size="small" plain type="primary" @click="toggleCompare(item)">
-              {{ comparedIds.includes(item.product.prodId) ? '取消对比' : '加入对比' }}
-            </van-button>
-            <van-button size="small" type="danger" @click="goDetail(item.product.prodId)">查看商品</van-button>
-          </div>
+          <van-button block type="danger" @click="goDetail(item.product.prodId)">
+            查看商品
+          </van-button>
         </article>
       </section>
-    </template>
-
-    <div v-if="comparedIds.length >= 2" class="compare-bar">
-      <span>已选择 {{ comparedIds.length }} 件商品</span>
-      <van-button size="small" round type="primary" @click="showCompare = true">开始对比</van-button>
-    </div>
-
-    <van-action-sheet v-model:show="showCompare" title="商品差异对比" class="compare-sheet">
-      <div class="compare-table">
-        <div class="compare-row compare-products">
-          <strong>商品</strong>
-          <span v-for="item in comparedProducts" :key="item.product.prodId">{{ item.product.prodName }}</span>
-        </div>
-        <div class="compare-row">
-          <strong>价格</strong>
-          <span v-for="item in comparedProducts" :key="item.product.prodId">¥{{ item.product.price }}</span>
-        </div>
-        <div v-for="key in compareKeys" :key="key" class="compare-row">
-          <strong>{{ key }}</strong>
-          <span v-for="item in comparedProducts" :key="item.product.prodId">
-            {{ item.product.attributes?.[key] ?? '暂无数据' }}
-          </span>
-        </div>
-      </div>
-    </van-action-sheet>
+    </Transition>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.guide-page { min-height: 100vh; padding-bottom: 120px; background: #f5f6fa; }
-.guide-hero { padding: 44px 28px 32px; color: #fff; background: radial-gradient(circle at 90% 4%, rgba(255,255,255,.25), transparent 28%), linear-gradient(145deg, #5728a8, #7b4ce0 55%, #526dff); }
-.hero-badge { display: inline-flex; gap: 8px; align-items: center; padding: 8px 16px; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; background: rgba(255,255,255,.12); font-size: 22px; }
-.guide-hero h1 { margin: 26px 0 14px; font-size: 44px; line-height: 1.3; }
-.guide-hero > p { margin: 0 0 26px; color: rgba(255,255,255,.82); font-size: 24px; line-height: 1.6; }
-.guide-input { margin-bottom: 20px; overflow: hidden; border-radius: 20px; color: #222; }
-.example-panel, .intent-panel { margin: 20px; padding: 24px; border-radius: 20px; background: #fff; }
-.example-panel h2, .intent-panel h2 { margin: 0; font-size: 29px; }
-.example-panel button { display: flex; width: 100%; justify-content: space-between; gap: 16px; padding: 22px 0; border: 0; border-bottom: 1px solid #eee; background: none; color: #444; text-align: left; font-size: 24px; line-height: 1.5; }
-.guide-loading { margin: 24px 20px; padding: 28px; border-radius: 20px; background: #fff; }
-.thinking-line { display: flex; gap: 14px; align-items: center; padding: 14px 0; color: #666; font-size: 24px; }
-.thinking-line span { width: 16px; height: 16px; border-radius: 50%; background: #7652d8; animation: pulse 1.2s ease infinite alternate; }
-.thinking-line:nth-child(2) span { animation-delay: .2s; }.thinking-line:nth-child(3) span { animation-delay: .4s; }
-.intent-panel header, .section-title, .card-actions { display: flex; align-items: center; justify-content: space-between; }
-.intent-tags { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
-.relaxed-tip { display: flex; gap: 8px; margin: 18px 0 0; color: #d97706; font-size: 22px; }
-.recommend-section { padding: 4px 20px 24px; }
-.section-title { margin: 22px 4px 16px; }.section-title small { color: #7b4ce0; font-size: 20px; }.section-title h2 { margin: 4px 0 0; font-size: 34px; }.section-title > span { color: #999; font-size: 22px; }
-.recommend-card { position: relative; margin-bottom: 18px; padding: 22px; overflow: hidden; border: 1px solid #ececf4; border-radius: 22px; background: #fff; box-shadow: 0 10px 28px rgba(46,38,80,.06); }
-.rank { position: absolute; z-index: 1; top: 12px; left: 12px; width: 38px; height: 38px; border-radius: 12px; background: #6f4bd8; color: #fff; font-weight: 700; line-height: 38px; text-align: center; }
-.product-main { display: flex; gap: 18px; cursor: pointer; }.product-main img { width: 170px; height: 170px; flex: 0 0 170px; object-fit: cover; border-radius: 16px; }.product-copy { min-width: 0; }.product-copy h3 { margin: 0; font-size: 27px; line-height: 1.35; }.product-copy p { display: -webkit-box; margin: 10px 0; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: #777; font-size: 21px; line-height: 1.5; }.product-copy strong { color: #ee0a24; font-size: 31px; }
-.match-list { margin-top: 18px; padding: 16px; border-radius: 14px; background: #f7f8fc; }.match-item, .unmatch-item { display: flex; gap: 8px; padding: 6px 0; font-size: 22px; }.match-item { color: #14805e; }.unmatch-item { color: #b7791f; }
-.evidence { margin-top: 14px; font-size: 21px; }.evidence summary { color: #6f4bd8; cursor: pointer; }.evidence p { display: grid; grid-template-columns: 110px 1fr; gap: 10px; margin: 12px 0; color: #777; line-height: 1.5; }.evidence strong { color: #444; }
-.card-actions { margin-top: 20px; justify-content: flex-end; gap: 12px; }
-.compare-bar { position: fixed; z-index: 10; right: 20px; bottom: 24px; left: 20px; display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-radius: 18px; background: #252333; color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,.22); font-size: 23px; }
-.compare-sheet { max-height: 78vh; }.compare-table { padding: 8px 20px 40px; overflow-x: auto; }.compare-row { display: grid; grid-template-columns: 110px repeat(3, minmax(170px, 1fr)); min-width: 650px; border-bottom: 1px solid #eee; }.compare-row > * { padding: 18px 12px; font-size: 21px; line-height: 1.4; }.compare-row strong { color: #666; }.compare-products span { font-weight: 600; color: #222; }
-@keyframes pulse { to { opacity: .25; transform: scale(.75); } }
+.guide-page {
+  min-height: 100vh;
+  padding-bottom: calc(40px + env(safe-area-inset-bottom));
+  background: var(--shop-bg);
+}
+
+.guide-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 42px 28px 34px;
+  background:
+    radial-gradient(circle at 92% 0, rgba(255, 255, 255, 0.34), transparent 28%),
+    linear-gradient(150deg, #ff4055 0%, var(--shop-primary) 62%, #cf0018 100%);
+  box-shadow: 0 14px 32px rgba(238, 10, 36, 0.14);
+
+  &::after {
+    position: absolute;
+    right: -76px;
+    bottom: -100px;
+    width: 250px;
+    height: 250px;
+    border: 34px solid rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    content: '';
+  }
+
+  h1,
+  .guide-input,
+  :deep(.van-button) {
+    position: relative;
+    z-index: 1;
+    animation: rise-in 0.5s both;
+  }
+
+  h1 {
+    margin: 0 0 28px;
+    color: #fff;
+    font-size: 44px;
+    line-height: 1.3;
+  }
+
+  .guide-input {
+    margin-bottom: 18px;
+    overflow: hidden;
+    border-radius: var(--shop-radius);
+    color: var(--shop-text);
+    box-shadow: 0 10px 28px rgba(139, 0, 16, 0.12);
+    animation-delay: 80ms;
+  }
+
+  :deep(.van-field__control) {
+    min-height: 118px;
+    font-size: 25px;
+    line-height: 1.55;
+  }
+
+  :deep(.van-button) {
+    height: 84px;
+    border: 0;
+    border-radius: var(--shop-radius-sm);
+    background: #fff;
+    color: var(--shop-primary);
+    font-size: 27px;
+    font-weight: 700;
+    animation-delay: 150ms;
+  }
+}
+
+.example-panel,
+.guide-loading,
+.recommend-card {
+  background: var(--shop-card);
+  border-radius: var(--shop-radius);
+}
+
+.example-panel {
+  margin: 20px;
+  padding: 24px;
+  animation: rise-in 0.45s 0.15s both;
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: 29px;
+  }
+
+  button {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 23px 0;
+    border: 0;
+    border-bottom: 1px solid var(--shop-border);
+    background: none;
+    color: var(--shop-text);
+    text-align: left;
+    font-size: 24px;
+    line-height: 1.5;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    .van-icon {
+      flex: 0 0 auto;
+      color: var(--shop-text-secondary);
+    }
+  }
+}
+
+.guide-loading {
+  display: flex;
+  margin: 24px 20px;
+  padding: 46px 32px 36px;
+  align-items: center;
+  flex-direction: column;
+  box-shadow: 0 8px 26px rgba(50, 50, 51, 0.05);
+
+  strong {
+    margin-top: 22px;
+    font-size: 29px;
+  }
+
+  > span {
+    margin-top: 10px;
+    color: var(--shop-text-secondary);
+    font-size: 23px;
+  }
+}
+
+.loading-orbit {
+  display: grid;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+  border: 3px solid var(--shop-primary-soft);
+  border-top-color: var(--shop-primary);
+  border-radius: 50%;
+  color: var(--shop-primary);
+  font-size: 34px;
+  animation: spin 1.1s linear infinite;
+
+  .van-icon {
+    animation: reverse-spin 1.1s linear infinite;
+  }
+}
+
+.loading-track {
+  width: 100%;
+  height: 6px;
+  margin-top: 30px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--shop-primary-soft);
+
+  i {
+    display: block;
+    width: 42%;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--shop-primary);
+    animation: scan 1.4s ease-in-out infinite;
+  }
+}
+
+.result-area {
+  padding: 20px;
+}
+
+.relaxed-tip {
+  margin-bottom: 16px;
+  border-radius: var(--shop-radius-sm);
+}
+
+.section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 8px 4px 18px;
+
+  h2 {
+    margin: 0;
+    font-size: 34px;
+  }
+
+  span {
+    color: var(--shop-text-secondary);
+    font-size: 22px;
+  }
+}
+
+.recommend-card {
+  margin-bottom: 18px;
+  padding: 22px;
+  border: 1px solid var(--shop-border);
+  box-shadow: 0 8px 24px rgba(50, 50, 51, 0.05);
+  opacity: 0;
+  animation: card-in 0.48s ease forwards;
+
+  :deep(.van-button) {
+    height: 70px;
+    margin-top: 20px;
+    border-radius: var(--shop-radius-sm);
+    font-size: 24px;
+  }
+}
+
+.product-main {
+  display: flex;
+  gap: 18px;
+  cursor: pointer;
+}
+
+.product-image-wrap {
+  position: relative;
+  width: 168px;
+  height: 168px;
+  flex: 0 0 168px;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--shop-radius-sm);
+    background: #f2f3f5;
+  }
+
+  span {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--shop-primary);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 34px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(238, 10, 36, 0.24);
+  }
+}
+
+.product-copy {
+  display: flex;
+  min-width: 0;
+  justify-content: space-between;
+  flex-direction: column;
+
+  h3 {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    color: var(--shop-text);
+    font-size: 26px;
+    line-height: 1.42;
+  }
+
+  strong {
+    color: var(--shop-primary);
+    font-size: 32px;
+  }
+
+  small {
+    margin-right: 2px;
+    font-size: 21px;
+  }
+}
+
+.match-list {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: var(--shop-radius-sm);
+  background: var(--shop-primary-soft);
+
+  div {
+    display: flex;
+    gap: 9px;
+    padding: 6px 0;
+    color: #5b232a;
+    font-size: 22px;
+    line-height: 1.45;
+  }
+
+  .van-icon {
+    margin-top: 4px;
+    flex: 0 0 auto;
+    color: var(--shop-primary);
+  }
+}
+
+.uncertain {
+  display: flex;
+  gap: 8px;
+  margin: 14px 2px 0;
+  color: var(--shop-text-secondary);
+  font-size: 20px;
+  line-height: 1.45;
+}
+
+.content-enter-active,
+.content-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.content-enter-from,
+.content-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes reverse-spin {
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes scan {
+  0% { transform: translateX(-110%); }
+  55%, 100% { transform: translateX(240%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide-hero h1,
+  .guide-hero .guide-input,
+  .guide-hero :deep(.van-button),
+  .example-panel,
+  .recommend-card,
+  .loading-orbit,
+  .loading-orbit .van-icon,
+  .loading-track i {
+    animation: none;
+    opacity: 1;
+  }
+}
 </style>
