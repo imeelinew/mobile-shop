@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue'
 import { getCategoryList, getCategoryProducts } from '@/api/category'
 import { useRouter, useRoute } from 'vue-router';
+import { showFailToast } from 'vant'
+import 'vant/es/toast/style'
 import ContentSkeleton from '@/components/ContentSkeleton.vue'
 const router = useRouter();
 const route = useRoute();
@@ -39,10 +41,12 @@ const categoryList = ref([])   // 左侧分类
 const productList = ref([])    // 右侧商品
 const loading = ref(true)
 const productLoading = ref(false)
+const loadError = ref('')
 
 const handleGetCategoryList = async () => {
     const res = await getCategoryList()
-    categoryList.value = res.data.map((item: any) => ({//遍历数组，并产生一个新数组
+    const categories = Array.isArray(res.data) ? res.data : []
+    categoryList.value = categories.map((item: any) => ({//遍历数组，并产生一个新数组
         ...item,//把原对象的全部字段复制过来
         text: item.categoryName//额外增加 Vant 需要的 text 字段
     }))
@@ -56,6 +60,9 @@ const handleGetCategoryProducts = async (categoryId: number) => {
     try {
         const res = await getCategoryProducts(categoryId)
         productList.value = res.data?.records || []
+    } catch {
+        productList.value = []
+        showFailToast('商品加载失败，请稍后重试')
     } finally {
         productLoading.value = false
     }
@@ -66,13 +73,22 @@ const handleChangeCategory = async (index: number) => {
         await handleGetCategoryProducts(category.categoryId)
     }
 }
-onMounted(async () => {
-    applyHomeCategory()
+const loadCategories = async () => {
+    loading.value = true
+    loadError.value = ''
+    categoryList.value = []
+    productList.value = []
     try {
         await handleGetCategoryList()
+    } catch {
+        loadError.value = '分类加载失败，请检查网络后重试'
     } finally {
         loading.value = false
     }
+}
+onMounted(() => {
+    applyHomeCategory()
+    void loadCategories()
 })
 </script>
 <template>
@@ -85,6 +101,9 @@ onMounted(async () => {
             @click="router.push('/search')"
         />
         <ContentSkeleton v-if="loading" variant="list" :rows="5" />
+        <van-empty v-else-if="loadError" image="network" :description="loadError">
+            <van-button round type="danger" size="small" @click="loadCategories">重新加载</van-button>
+        </van-empty>
         <div v-else class="category-content">
             <van-sidebar v-model="active" class="category-sidebar" @change="handleChangeCategory">
                 <van-sidebar-item :title="item.text" v-for="item in categoryList" :key="item.categoryId" />
