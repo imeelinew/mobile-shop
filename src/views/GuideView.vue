@@ -45,7 +45,6 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
     <van-nav-bar title="轻购AI" left-text="返回" left-arrow @click-left="router.back()" />
 
     <section class="guide-hero">
-      <div class="hero-mark"><van-icon name="chat-o" /></div>
       <h1>想买什么，问轻购AI</h1>
       <p>把预算和需求告诉我，少做功课，更快买对。</p>
 
@@ -162,23 +161,10 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
   position: relative;
   padding: 38px 28px 12px;
 
-  .hero-mark,
   h1,
   > p,
   .compose-card {
     animation: rise-in 0.5s both;
-  }
-
-  .hero-mark {
-    display: grid;
-    width: 68px;
-    height: 68px;
-    margin-bottom: 22px;
-    place-items: center;
-    border-radius: 20px;
-    background: linear-gradient(145deg, #ff4055, var(--shop-primary));
-    color: #fff;
-    font-size: 34px;
   }
 
   h1 {
@@ -556,7 +542,6 @@ const goDetail = (prodId: number) => router.push({ path: '/product-detail', quer
 
 @media (prefers-reduced-motion: reduce) {
   .guide-hero h1,
-  .guide-hero .hero-mark,
   .guide-hero > p,
   .guide-hero .compose-card,
   .guide-hero .guide-input,
