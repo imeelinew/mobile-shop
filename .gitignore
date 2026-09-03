@@ -41,3 +41,6 @@ __screenshots__/
 
 # Cloudflare local development
 .wrangler/
+
+# One-off product scraping and import workspace
+/scrape/
