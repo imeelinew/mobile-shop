@@ -190,7 +190,7 @@ onMounted(() => {
       <div class="ai-selling-title">
         <strong>AI智能卖点</strong>
         <van-tag plain :type="aiSource === 'openai' ? 'primary' : 'success'">
-          <span v-if="aiSource === 'openai'">DeepSeek AI</span>
+          <span v-if="aiSource === 'openai'">GLM AI</span>
           <span v-else-if="aiSellingPoints.length > 3">智能推荐卖点</span>
           <span v-else>本地</span>
         </van-tag>

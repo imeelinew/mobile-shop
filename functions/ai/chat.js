@@ -1,5 +1,5 @@
-const DEFAULT_AI_BASE_URL = 'https://api.deepseek.com'
-const DEFAULT_AI_MODEL = 'deepseek-chat'
+const DEFAULT_AI_BASE_URL = 'https://open.bigmodel.cn/api/paas/v4'
+const DEFAULT_AI_MODEL = 'glm-5.3-flash'
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status,
@@ -15,7 +15,7 @@ export async function onRequestPost({ request, env }) {
     return json({ error: '不允许跨站调用' }, 403)
   }
 
-  if (!env.AI_API_KEY) {
+  if (!env.BIGMODEL_API_KEY) {
     return json({ error: 'AI 模型未配置' }, 503)
   }
 
@@ -32,7 +32,6 @@ export async function onRequestPost({ request, env }) {
   }
 
   const maxTokens = Math.min(Math.max(Number(payload.maxTokens) || 200, 1), 300)
-  const temperature = Math.min(Math.max(Number(payload.temperature) || 0.7, 0), 1)
   const baseUrl = (env.AI_BASE_URL || DEFAULT_AI_BASE_URL).replace(/\/$/, '')
   const model = env.AI_MODEL || DEFAULT_AI_MODEL
 
@@ -40,13 +39,16 @@ export async function onRequestPost({ request, env }) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${env.AI_API_KEY}`
+      Authorization: `Bearer ${env.BIGMODEL_API_KEY}`
     },
     body: JSON.stringify({
       model,
       messages: [{ role: 'user', content: promptText }],
       max_tokens: maxTokens,
-      temperature
+      temperature: 1,
+      top_p: 0.95,
+      reasoning_effort: 'low',
+      thinking: { type: 'enabled', clear_thinking: false }
     })
   })
 

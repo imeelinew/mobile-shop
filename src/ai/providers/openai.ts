@@ -8,7 +8,7 @@ type AIRequestOptions = {
 export const isAvailable = () => true
 
 /**
- * OpenAI 兼容接口调用层。DeepSeek、通义等兼容服务只需更换三个环境变量。
+ * OpenAI 兼容接口调用层。GLM 等兼容服务只需更换环境变量。
  * 正式项目不要在浏览器中保存密钥，应改为请求自己的后端代理。
  */
 export const requestAI = async (
