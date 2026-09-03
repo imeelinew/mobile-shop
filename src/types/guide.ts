@@ -10,6 +10,7 @@ export type GuideProduct = {
 
 export type GuideRecommendation = {
   product: GuideProduct
+  matchScore: number
   matched: string[]
   unmatched: string[]
   evidence: Array<{ requirement: string; source: string }>
