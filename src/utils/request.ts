@@ -26,7 +26,7 @@ const handleUnauthorized = async () => {
 }
 
 const request = axios.create({
-    baseURL: import.meta.env.VITE_APP_URL || 'https://api-qg.107.173.35.208.nip.io',
+    baseURL: import.meta.env.VITE_APP_URL || 'https://api.qg.elinew.tech',
     timeout: 5000,
 })
 // 请求拦截器
