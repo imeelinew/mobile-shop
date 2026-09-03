@@ -26,7 +26,7 @@ const router = useRouter()
   position: fixed;
   z-index: 20;
   right: 24px;
-  bottom: calc(116px + env(safe-area-inset-bottom));
+  bottom: calc(140px + env(safe-area-inset-bottom));
   width: 96px;
   height: 96px;
 }
