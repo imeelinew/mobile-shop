@@ -1,10 +1,11 @@
 import axios from 'axios'
 import { getToken, removeToken } from '@/utils/token'
+import { API_BASE_URL } from '@/config/api'
 
 const UNAUTHORIZED_CODE = 'A00004'
 let redirectingToLogin = false
 
-const handleUnauthorized = async () => {
+export const handleUnauthorized = async () => {
     removeToken()
 
     if (redirectingToLogin || ['/login', '/register'].includes(window.location.pathname)) {
@@ -26,7 +27,7 @@ const handleUnauthorized = async () => {
 }
 
 const request = axios.create({
-    baseURL: import.meta.env.VITE_APP_URL || 'https://api.qg.elinew.tech',
+    baseURL: API_BASE_URL,
     timeout: 5000,
 })
 // 请求拦截器

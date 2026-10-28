@@ -45,7 +45,7 @@ const usernameValidator = (value) => {
 }
 
 const passwordValidator = (value) => {
-    return /^\d{6,16}$/.test(value)
+    return typeof value === 'string' && value.length >= 8 && value.length <= 72
 }
 </script>
 <template>
@@ -66,7 +66,7 @@ const passwordValidator = (value) => {
                 }]" />
                 <van-field v-model="password" type="password" name="password" label="密码" placeholder="密码" :rules="[{ required: true, message: '请填写密码' }, {
                     validator: passwordValidator,
-                    message: '密码必须是6到16位数字'
+                    message: '密码长度必须为8到72位'
                 }]" />
             </van-cell-group>
             <div class="submit-box">

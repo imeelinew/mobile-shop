@@ -1,3 +1,7 @@
+import { apiUrl } from '@/config/api'
+import { handleUnauthorized } from '@/utils/request'
+import { getToken } from '@/utils/token'
+
 type AIRequestOptions = {
   timeout?: number
   maxTokens?: number
@@ -8,8 +12,7 @@ type AIRequestOptions = {
 export const isAvailable = () => true
 
 /**
- * OpenAI 兼容接口调用层。GLM 等兼容服务只需更换环境变量。
- * 正式项目不要在浏览器中保存密钥，应改为请求自己的后端代理。
+ * 客户端只访问本站后端代理，第三方模型密钥保留在服务端。
  */
 export const requestAI = async (
   promptText: string,
@@ -24,12 +27,13 @@ export const requestAI = async (
   if (options.signal?.aborted) controller.abort()
 
   try {
-    const apiBaseUrl = import.meta.env.VITE_APP_URL || 'https://api.qg.elinew.tech'
-    const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/ai/chat`, {
+    const token = getToken()
+    const response = await fetch(apiUrl('/ai/chat'), {
       method: 'POST',
       signal: controller.signal,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
       },
       body: JSON.stringify({
         promptText,
@@ -40,10 +44,12 @@ export const requestAI = async (
 
     if (!response.ok) {
       const message: Record<number, string> = {
-        401: 'AI 密钥无效',
-        402: 'AI 账户余额不足',
-        403: 'AI 服务拒绝访问'
+        401: '登录已失效，请重新登录',
+        403: '当前账号无权使用 AI 服务',
+        429: 'AI 请求过于频繁，请稍后重试',
+        503: 'AI 服务暂不可用'
       }
+      if (response.status === 401) void handleUnauthorized()
       throw new Error(message[response.status] || `AI 请求失败（${response.status}）`)
     }
 

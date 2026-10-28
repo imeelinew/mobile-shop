@@ -1,7 +1,14 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { confirmReceipt, getMyOrderInfo, payOrder } from '@/api/order'
+import {
+    cancelOrder,
+    confirmReceipt,
+    getMyOrderInfo,
+    ORDER_STATUS,
+    payOrder,
+    type OrderStatus,
+} from '@/api/order'
 import { showConfirmDialog, showFailToast, showSuccessToast } from 'vant'
 import 'vant/es/dialog/style'
 import 'vant/es/toast/style'
@@ -16,7 +23,7 @@ type OrderTabState = {
 
 type OrderTab = {
     title: string
-    status: number
+    status: OrderStatus
     state: OrderTabState
 }
 
@@ -31,16 +38,18 @@ const createState = (): OrderTabState => ({
 })
 
 const tabs = ref<OrderTab[]>([
-    { title: '待付款', status: 1, state: createState() },
-    { title: '待发货', status: 2, state: createState() },
-    { title: '待收货', status: 3, state: createState() },
-    { title: '已完成', status: 5, state: createState() },
+    { title: '待付款', status: ORDER_STATUS.pendingPayment, state: createState() },
+    { title: '待发货', status: ORDER_STATUS.pendingShipment, state: createState() },
+    { title: '待收货', status: ORDER_STATUS.pendingReceipt, state: createState() },
+    { title: '已完成', status: ORDER_STATUS.completed, state: createState() },
+    { title: '已取消', status: ORDER_STATUS.cancelled, state: createState() },
 ])
 
 const routeActive = Number(route.query.active)
 const active = ref(Number.isInteger(routeActive) && routeActive >= 0 && routeActive < tabs.value.length
     ? routeActive
     : 0)
+const processingOrders = ref(new Set<string>())
 
 const resetTab = (tab: OrderTab) => {
     tab.state.current = 0
@@ -98,6 +107,19 @@ const refreshTab = async (index = active.value) => {
 }
 
 const getOrderNumber = (order: any) => order.orderNumbers || order.orderNumber
+const isProcessing = (order: any) => processingOrders.value.has(String(getOrderNumber(order)))
+
+const runOrderAction = async (order: any, action: () => Promise<void>) => {
+    const orderNumber = String(getOrderNumber(order) || '')
+    if (!orderNumber || processingOrders.value.has(orderNumber)) return
+
+    processingOrders.value.add(orderNumber)
+    try {
+        await action()
+    } finally {
+        processingOrders.value.delete(orderNumber)
+    }
+}
 
 const handlePay = async (order: any) => {
     const orderNumbers = getOrderNumber(order)
@@ -107,31 +129,63 @@ const handlePay = async (order: any) => {
         return
     }
 
-    try {
-        await showConfirmDialog({
-            title: '确认付款',
-            message: '确认支付该订单吗？',
-        })
-    } catch (error) {
-        return
-    }
-
-    try {
-        const res = await payOrder({
-            orderNumbers: String(orderNumbers),
-            payType: 1,
-        })
-
-        if (!res.success) {
-            showFailToast(res.msg || '支付失败，请稍后重试')
+    await runOrderAction(order, async () => {
+        try {
+            await showConfirmDialog({
+                title: '模拟支付',
+                message: '这是演示环境，不会产生真实扣款。确认模拟支付该订单吗？',
+            })
+        } catch (error) {
             return
         }
 
-        showSuccessToast('当前订单支付成功')
-        await refreshTab()
-    } catch (error) {
-        showFailToast('支付失败，请稍后重试')
-    }
+        try {
+            const res = await payOrder({
+                orderNumbers: String(orderNumbers),
+                payType: 1,
+            })
+
+            if (!res.success) {
+                showFailToast(res.msg || '模拟支付失败，请稍后重试')
+                return
+            }
+
+            showSuccessToast('模拟支付成功')
+            await refreshTab()
+        } catch (error) {
+            showFailToast('模拟支付失败，请稍后重试')
+        }
+    })
+}
+
+const handleCancel = async (order: any) => {
+    const orderNumber = getOrderNumber(order)
+
+    if (!orderNumber) return
+
+    await runOrderAction(order, async () => {
+        try {
+            await showConfirmDialog({
+                title: '取消订单',
+                message: '取消后库存会立即回补，确认取消该订单吗？',
+                confirmButtonText: '确认取消',
+            })
+        } catch (error) {
+            return
+        }
+
+        try {
+            const res = await cancelOrder(String(orderNumber))
+            if (!res.success) {
+                showFailToast(res.msg || '取消订单失败')
+                return
+            }
+            showSuccessToast('订单已取消')
+            await refreshTab()
+        } catch (error) {
+            showFailToast('取消订单失败，请稍后重试')
+        }
+    })
 }
 
 const handleReceipt = async (order: any) => {
@@ -142,28 +196,30 @@ const handleReceipt = async (order: any) => {
         return
     }
 
-    try {
-        await showConfirmDialog({
-            title: '确认收货',
-            message: '确认已经收到商品吗？',
-        })
-    } catch (error) {
-        return
-    }
-
-    try {
-        const res = await confirmReceipt(String(orderNumber))
-
-        if (!res.success) {
-            showFailToast(res.msg || '确认收货失败')
+    await runOrderAction(order, async () => {
+        try {
+            await showConfirmDialog({
+                title: '确认收货',
+                message: '确认已经收到商品吗？',
+            })
+        } catch (error) {
             return
         }
 
-        showSuccessToast('确认收货成功')
-        await refreshTab()
-    } catch (error) {
-        showFailToast('确认收货失败')
-    }
+        try {
+            const res = await confirmReceipt(String(orderNumber))
+
+            if (!res.success) {
+                showFailToast(res.msg || '确认收货失败')
+                return
+            }
+
+            showSuccessToast('确认收货成功')
+            await refreshTab()
+        } catch (error) {
+            showFailToast('确认收货失败')
+        }
+    })
 }
 
 const formatMoney = (value: unknown) => {
@@ -234,11 +290,29 @@ onMounted(() => {
                             <span>合计 ¥{{ formatMoney(order.actualTotal) }}</span>
                         </div>
 
-                        <div v-if="tab.status === 1 || tab.status === 3" class="order-actions">
-                            <van-button v-if="tab.status === 1" size="small" type="danger" @click.stop="handlePay(order)">
-                                确认付款
-                            </van-button>
-                            <van-button v-else size="small" type="danger" @click.stop="handleReceipt(order)">
+                        <div v-if="tab.status === ORDER_STATUS.pendingPayment || tab.status === ORDER_STATUS.pendingReceipt"
+                            class="order-actions">
+                            <template v-if="tab.status === ORDER_STATUS.pendingPayment">
+                                <van-button
+                                    size="small"
+                                    plain
+                                    :disabled="isProcessing(order)"
+                                    @click.stop="handleCancel(order)"
+                                >
+                                    取消订单
+                                </van-button>
+                                <van-button
+                                    size="small"
+                                    type="danger"
+                                    :loading="isProcessing(order)"
+                                    :disabled="isProcessing(order)"
+                                    @click.stop="handlePay(order)"
+                                >
+                                    模拟支付
+                                </van-button>
+                            </template>
+                            <van-button v-else size="small" type="danger" :loading="isProcessing(order)"
+                                :disabled="isProcessing(order)" @click.stop="handleReceipt(order)">
                                 确认收货
                             </van-button>
                         </div>
@@ -347,6 +421,7 @@ onMounted(() => {
 .order-actions {
     display: flex;
     justify-content: flex-end;
+    gap: 16px;
     padding: 0 24px 20px;
 }
 

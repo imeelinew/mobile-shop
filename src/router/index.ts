@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { getToken } from '@/utils/token'
+import { getCurrentUser } from '@/api/userInfo'
 import Layout from '@/components/Layout.vue'
 
 const AddressView = () => import('@/views/AddressView.vue')
@@ -14,6 +15,7 @@ const ProductDetailView = () => import('@/views/ProductDetailView.vue')
 const RegisterView = () => import('@/views/RegisterView.vue')
 const SearchView = () => import('@/views/SearchView.vue')
 const GuideView = () => import('@/views/GuideView.vue')
+const AdminOrdersView = () => import('@/views/AdminOrdersView.vue')
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -59,6 +61,11 @@ const router = createRouter({
       component: MyOrderView,
     },
     {
+      path: '/admin/orders',
+      name: 'admin-orders',
+      component: AdminOrdersView,
+    },
+    {
       path: '/',
       component: Layout,
       redirect: '/home',
@@ -90,11 +97,22 @@ const router = createRouter({
 
 const whiteList = ['/login', '/register', '/guide']
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   if (!getToken() && !whiteList.includes(to.path)) {
     return {
       path: '/login',
       query: { redirect: to.fullPath },
+    }
+  }
+
+  if (to.path === '/admin/orders') {
+    try {
+      const res = await getCurrentUser()
+      if (!res.success || res.data?.role !== 'admin') {
+        return '/mine'
+      }
+    } catch {
+      return '/mine'
     }
   }
 })

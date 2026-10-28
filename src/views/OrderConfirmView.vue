@@ -6,9 +6,15 @@ import { showConfirmDialog, showFailToast, showSuccessToast, showToast } from 'v
 import 'vant/es/dialog/style'
 import 'vant/es/toast/style'
 import ContentSkeleton from '@/components/ContentSkeleton.vue'
+import {
+    clearCheckoutIdempotencyKey,
+    getCheckoutIdempotencyKey,
+} from '@/utils/checkoutIdempotency'
 
 const router = useRouter()
 const loading = ref(true)
+const submitting = ref(false)
+const createdOrderNumber = ref('')
 const defaultAddress = ref<any>(null)
 const confirmData = ref<any>(null)
 
@@ -48,41 +54,46 @@ const loadOrder = async () => {
 }
 
 const handleSubmitOrder = async () => {
-    if (!confirmData.value) return
+    if (!confirmData.value || submitting.value || createdOrderNumber.value) return
     if (!defaultAddress.value?.addrId) {
         showFailToast('请先添加收货地址')
         return
     }
 
+    submitting.value = true
     try {
         const orderShopParams = confirmData.value.shopCartOrders.map((shop: any) => ({
             shopId: shop.shopId,
             remarks: shop.remarks || '',
         }))
-        const res = await submitOrder({
+        const payload = {
             orderShopParams,
             checkoutItems: confirmData.value.checkoutItems,
             addrId: defaultAddress.value.addrId,
-        })
+        }
+        const idempotencyKey = getCheckoutIdempotencyKey(payload)
+        const res = await submitOrder(payload, idempotencyKey)
 
         if (res.success) {
             const orderNumbers = res.data?.orderNumbers || res.data?.orderNumber
 
             if (!orderNumbers) {
-                showFailToast('订单提交成功，但未获取到支付流水号')
+                showFailToast('订单提交成功，但未获取到订单号')
                 return
             }
 
+            createdOrderNumber.value = String(orderNumbers)
+            clearCheckoutIdempotencyKey()
             sessionStorage.removeItem('confirmOrder')
 
             try {
                 await showConfirmDialog({
-                    title: '确认支付',
-                    message: '确认支付该订单吗？',
+                    title: '模拟支付',
+                    message: '这是演示环境，不会产生真实扣款。确认模拟支付该订单吗？',
                 })
             } catch (error) {
-                showToast('当前订单已到待支付，请及时处理')
-                router.replace('/mine')
+                showToast('订单已创建，可在待付款中继续处理')
+                await router.replace('/my-order?active=0')
                 return
             }
 
@@ -93,22 +104,26 @@ const handleSubmitOrder = async () => {
                     payType: 1,
                 })
             } catch (error) {
-                showFailToast('支付失败，请稍后重试')
+                showFailToast('订单已创建但模拟支付失败，请在待付款中重试')
+                await router.replace('/my-order?active=0')
                 return
             }
 
             if (!payRes.success) {
-                showFailToast(payRes.msg || '支付失败，请稍后重试')
+                showFailToast(payRes.msg || '订单已创建但模拟支付失败，请在待付款中重试')
+                await router.replace('/my-order?active=0')
                 return
             }
 
             showSuccessToast('当前订单支付成功')
-            router.replace('/mine')
+            await router.replace('/my-order?active=1')
         } else {
             showFailToast(res.msg || '订单提交失败')
         }
     } catch (error) {
         showFailToast('订单提交失败')
+    } finally {
+        submitting.value = false
     }
 }
 
@@ -172,11 +187,29 @@ onMounted(() => {
                 <van-cell title="支付金额" class="pay-cell" :value="`¥${confirmData.actualTotal}`" />
             </div>
 
-            <van-submit-bar
-                :price="confirmData.actualTotal * 100"
-                button-text="提交订单"
-                @submit="handleSubmitOrder"
-            />
+            <section v-if="createdOrderNumber" class="created-order-state" aria-live="polite">
+                <van-icon name="passed" aria-hidden="true" />
+                <div>
+                    <h3>订单已创建</h3>
+                    <p>订单号 {{ createdOrderNumber }}，请前往待付款完成模拟支付。</p>
+                </div>
+                <van-button size="small" type="danger" @click="router.replace('/my-order?active=0')">
+                    查看待付款
+                </van-button>
+            </section>
+
+            <template v-else>
+                <van-notice-bar class="payment-demo" left-icon="info-o" wrapable
+                    text="演示支付：提交后仅执行模拟扣款，不会产生真实交易。" />
+
+                <van-submit-bar
+                    :price="confirmData.actualTotal * 100"
+                    :button-text="submitting ? '提交中...' : '提交订单'"
+                    :loading="submitting"
+                    :disabled="submitting"
+                    @submit="handleSubmitOrder"
+                />
+            </template>
         </template>
         <van-empty v-else description="暂无订单信息" />
     </div>
@@ -294,6 +327,45 @@ onMounted(() => {
             color: var(--shop-primary);
             font-weight: 700;
         }
+    }
+}
+
+.payment-demo {
+    margin: 16px 20px 0;
+    border-radius: var(--shop-radius-sm);
+}
+
+.created-order-state {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 16px;
+    align-items: center;
+    margin: 16px 20px 120px;
+    padding: 24px;
+    border-radius: var(--shop-radius);
+    background: var(--shop-card);
+
+    > :deep(.van-icon) {
+        color: var(--shop-primary);
+        font-size: 48px;
+    }
+
+    h3 {
+        margin: 0;
+        color: var(--shop-text);
+        font-size: 28px;
+    }
+
+    p {
+        margin: 8px 0 0;
+        color: var(--shop-text-secondary);
+        font-size: 22px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    :deep(.van-button) {
+        grid-column: 1 / -1;
     }
 }
 </style>
